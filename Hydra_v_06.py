@@ -670,6 +670,8 @@ enemy_count = 4
 enemies = []
 powerUps = []
 
+print('test for github')
+
 #pre-game menu
 while not game_start and running:
     for event in pygame.event.get():
