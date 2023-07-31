@@ -284,6 +284,8 @@ class Powerup:
             self.display_time = 6
             self.color_value = 0
         self.color = (self.color_value,self.color_value,self.color_value)
+        self.time_Active = 0
+        self.paused_Time = 0
 
     def collides_with(self, player):
         if not self.is_active:
@@ -293,25 +295,28 @@ class Powerup:
 
         return distance <= player.radius + 10
     
-    def draw(self, screen, dt):
+    def draw(self, screen, dt, paused=False, pause=0):
         #powerup color and timing logic
+        if paused:
+            self.paused_Time += pause
+        end_Time = time.time() - self.paused_Time
+        self.time_Active = end_Time - self.start_Time
+
         dt = dt * 100
-        end_Time = time.time()
-        time_Active = end_Time - self.start_Time
 
         #timeout after display_time seconds
-        if time_Active > self.display_time:
+        if self.time_Active > self.display_time:
                 self.is_active = False
 
         if not self.is_active:
-            return
+            return False
         
         #powerup types
         match self.type:
             case 'Frozen':
                 self.color = 'dodgerblue'
 
-                if round(time_Active,0) % 2 == 0:
+                if round(self.time_Active,0) % 2 == 0:
                     self.color = 'white'
                 else:
                     self.color = 'dodgerblue'
@@ -325,7 +330,7 @@ class Powerup:
                     self.color = (self.color[0]+1*dt,self.color[1],self.color[2])
 
             case 'Speed':
-                if round(time_Active,0) % 2 == 0:
+                if round(self.time_Active,0) % 2 == 0:
                     self.color = 'aquamarine1'
                 else:
                     self.color = 'gold'
@@ -344,6 +349,8 @@ class Powerup:
             screen.blit(message_text, ((screen.get_width() - text_width) // 2, (screen.get_height() - text_height) // 3 + self.rand))
         else:
             pygame.draw.circle(screen, self.color, (self.position.x, self.position.y), 10)
+        
+        return True
 
 
 class Boss:

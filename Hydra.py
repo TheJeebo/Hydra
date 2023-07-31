@@ -40,7 +40,11 @@ def powerup_spawn(type):
 
 def powerup_logic(powerUps):
     for powerup in powerUps:
-        powerup.draw(screen, dt)
+        active = powerup.draw(screen, dt)
+
+        if not active:
+            powerUps.remove(powerup)
+
         if powerup.collides_with(player):
             powerUps.remove(powerup)
 
@@ -223,6 +227,8 @@ message_font = pygame.font.Font(None, 100)
 debug_font = pygame.font.Font(None, 50)
 game_start = False
 start_message_text = message_font.render('Press E to Start', True, 'white')
+show_debug = False
+game_pause = False
 
 #player variables
 player_pos = pygame.Vector2(screen.get_width() / 2, screen.get_height() / 2)
@@ -269,12 +275,62 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-        elif event.type == pygame.KEYDOWN and game_over:
-            if event.key == pygame.K_e:
+        elif event.type == pygame.KEYDOWN:
+            if game_over and event.key == pygame.K_e:
                 reset_game(len(the_boss))
                 enemy_count = 4
                 game_over = False
                 player_died = False
+            elif event.key == pygame.K_F1:
+                if show_debug:
+                    show_debug = False
+                else:
+                    show_debug = True
+            elif event.key == pygame.K_e:
+                game_pause = True
+
+    #pause      
+    paused_time = 0
+    pause_start = time.time()
+    while game_pause:
+        background_sound.set_volume(0.2)
+        boss_sound.set_volume(0.2)
+        message_text = message_font.render('Game Paused - Press E to Resume', True, 'white')
+        text_width = message_text.get_width()
+        text_height = message_text.get_height()
+        screen.blit(message_text, ((screen.get_width() - text_width) // 2, (screen.get_height() - text_height) // 2))
+        pygame.display.update()
+
+        pause_end = time.time()
+        paused_time = pause_end - pause_start
+        #print(round(paused_time,1))
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+                game_pause = False
+            elif event.type == pygame.KEYDOWN:
+                if game_over and event.key == pygame.K_e:
+                    reset_game(len(the_boss))
+                    enemy_count = 4
+                    game_over = False
+                    player_died = False
+                elif event.key == pygame.K_F1:
+                    if show_debug:
+                        show_debug = False
+                    else:
+                        show_debug = True
+                elif event.key == pygame.K_e:
+                    game_pause = False
+                    background_sound.set_volume(0.5)
+                    boss_sound.set_volume(0.7)
+                    clock = pygame.time.Clock()
+
+    #powerup pause correction
+    if len(powerUps) > 0:
+        for powerup in powerUps:
+            powerup.draw(screen, dt, True, paused_time)
+            #print(round(powerup.time_Active,1))
         
     #background and check keys
     screen.fill('black')
@@ -353,7 +409,8 @@ while running:
         debug_text = debug_font.render('Cooldown: ' + str(player.projectile_cooldown) + ' Enemies: ' + str(len(enemies)) + 
                                     ' dt: ' + str(dt) +' e_speed: 0' + ' player speed: ' + str(round(player.speed,0)) +
                                     ' projectiles : ' + str(len(projectiles)), True, 'white')
-    screen.blit(debug_text, (10, screen.get_height() - 50))
+    if show_debug:
+        screen.blit(debug_text, (10, screen.get_height() - 50))
 
     pygame.display.update()
     dt = clock.tick(200) / 1000
