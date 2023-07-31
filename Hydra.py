@@ -1,6 +1,7 @@
 import pygame, random, time
 from module import Player, Enemy, Boss, Powerup
 
+
 #game functions
 def reset_game(boss_Count):
     #resets game after player death
@@ -23,10 +24,10 @@ def reset_game(boss_Count):
         enemies.append(Enemy(len(enemies), screen, enemy_die_Sound))
 
 def powerup_spawn(type):
-    #every 5 points there is a 25% chance for a Powerup Shooting
+    #every 5 points there is a 25% chance for a Powerup
     if player.score % 5 == 0:
         powerup_roll = random.randint(1,100)
-        if powerup_roll < 25: #25
+        if powerup_roll < 25:
             match type:
                 case 'Shooting':
                     if player.projectile_cooldown > 100:
@@ -34,7 +35,7 @@ def powerup_spawn(type):
                 case 'Speed':
                     if player.speed < 700:
                         powerUps.append(Powerup(screen, type))
-                case _:
+                case 'Frozen':
                     powerUps.append(Powerup(screen, type))
 
 def powerup_logic(powerUps):
@@ -46,6 +47,7 @@ def powerup_logic(powerUps):
             #removes 25 from shooting cooldown, down to 100
             if powerup.type == 'Shooting':
                 powerup_sound_shooting.play()
+                message = 'Shooting Cooldown -25'
                 if player.projectile_cooldown > 100:
                     player.projectile_cooldown -= 25
                     if player.projectile_cooldown < 100:
@@ -54,6 +56,7 @@ def powerup_logic(powerUps):
             #freezes enemies
             if powerup.type == 'Frozen':
                 powerup_sound_frozen.play()
+                message = 'All Enemies Frozen'
                 for enemy in enemies:
                     enemy.is_frozen = True
                     enemy.frozen_start = time.time()
@@ -61,8 +64,15 @@ def powerup_logic(powerUps):
             #speed up player, up to...
             if powerup.type == 'Speed':
                 powerup_sound_speed.play()
+                message = 'Player Speed +10'
                 player.speed += 10
                 player.projectile_speed += 10
+            
+            #Display powerup message
+            try:
+                powerUps.append(Powerup(screen, 'Message', message))
+            except:
+                print('PowerUp Message Error')
 
 def projectile_logic(projectiles, enemy_count, game_over, player_died):
     #returns enemy_count unless Boss projectile hits player, then returns True
@@ -101,7 +111,11 @@ def projectile_logic(projectiles, enemy_count, game_over, player_died):
             #enemies hit by projectile logic
             if projectile.collides_with(enemy):
                 enemy.die()
-                projectiles.remove(projectile)
+                try:
+                    projectiles.remove(projectile)
+                except:
+                    print('Projectile Error')
+
                 if projectile.type == 'Player':
                     player.score += 1
 
@@ -126,6 +140,7 @@ def projectile_logic(projectiles, enemy_count, game_over, player_died):
     return enemy_count
 
 def enemy_logic(enemies, enemy_count, game_over, the_boss, player_died):
+    #enemies chase player unless boss is present, then they run off screen
     for enemy in enemies:
         if len(the_boss) > 0:
             enemy.boss_exists = True
@@ -168,13 +183,13 @@ def enemy_logic(enemies, enemy_count, game_over, the_boss, player_died):
         return True
     return False
 
-def is_out_of_bounds(enemy, screen_width, screen_height):
-    return (
-        enemy.position.x < -enemy.radius or
-        enemy.position.x > screen_width + enemy.radius or
-        enemy.position.y < -enemy.radius or
-        enemy.position.y > screen_height + enemy.radius
-    )
+def is_out_of_bounds(object, screen_width, screen_height):
+    #used for projectiles and enemies to clear items that are off screen
+    return (object.position.x < -object.radius or
+        object.position.x > screen_width + object.radius or
+        object.position.y < -object.radius or
+        object.position.y > screen_height + object.radius)
+
 
 #audio variables
 pygame.init()
@@ -204,7 +219,7 @@ screen = pygame.display.set_mode((1920, 1080))
 running = True
 game_over = False
 score_font = pygame.font.Font(None, 36)
-message_font = pygame.font.Font(None, 150)
+message_font = pygame.font.Font(None, 100)
 debug_font = pygame.font.Font(None, 50)
 game_start = False
 start_message_text = message_font.render('Press E to Start', True, 'white')
