@@ -1,6 +1,6 @@
 import pygame, random, time
 
-#game classes
+
 class Player:
     def __init__(self, position, color, projectile_Sound):
         self.position = position
