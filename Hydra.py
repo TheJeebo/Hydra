@@ -361,7 +361,7 @@ while running:
     game_over = player_died
 
     #boss logic
-    if player.score % 2 == 0 and len(the_boss) == 0 and player.score > 0:
+    if player.score % 100 == 0 and len(the_boss) == 0 and player.score > 0:
         background_sound.fadeout(2000)
         boss_sound.set_volume(0.7)
         boss_sound.play(-1)
