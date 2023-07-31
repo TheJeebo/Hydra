@@ -40,7 +40,7 @@ def powerup_spawn(type):
 
 def powerup_logic(powerUps):
     for powerup in powerUps:
-        powerup.draw(screen)
+        powerup.draw(screen, dt)
         if powerup.collides_with(player):
             powerUps.remove(powerup)
 
@@ -152,7 +152,7 @@ def enemy_logic(enemies, enemy_count, game_over, the_boss, player_died):
                 enemies.remove(enemy)
 
         enemy.move(player.position, dt)
-        status = enemy.draw(screen)
+        status = enemy.draw(screen, dt)
         if enemy.speed < 300:
             enemy.speed += 1/100
 
@@ -347,16 +347,15 @@ while running:
     #debug
     if len(enemies) > 0:
         debug_text = debug_font.render('Cooldown: ' + str(player.projectile_cooldown) + ' Enemies: ' + str(len(enemies)) + 
-                                    ' dt: ' + str(dt) +' e_speed: ' + str(round(enemies[0].speed,0)) +
-                                    ' e_jitter: ' + str(round(enemies[0].jitter,0)) +' player speed: ' + str(round(player.speed,0)) + 
+                                    ' dt: ' + str(dt) +' e_speed: ' + str(round(enemies[0].speed,0)) +' player speed: ' + str(round(player.speed,0)) + 
                                     ' projectiles : ' + str(len(projectiles)), True, 'white')
     else:
         debug_text = debug_font.render('Cooldown: ' + str(player.projectile_cooldown) + ' Enemies: ' + str(len(enemies)) + 
-                                    ' dt: ' + str(dt) +' e_speed: 0' + ' e_jitter: 0' ' player speed: ' + str(round(player.speed,0)) +
+                                    ' dt: ' + str(dt) +' e_speed: 0' + ' player speed: ' + str(round(player.speed,0)) +
                                     ' projectiles : ' + str(len(projectiles)), True, 'white')
-    #screen.blit(debug_text, (10, screen.get_height() - 50))
+    screen.blit(debug_text, (10, screen.get_height() - 50))
 
     pygame.display.update()
-    dt = clock.tick(144) / 1000
+    dt = clock.tick(200) / 1000
 
 pygame.quit()

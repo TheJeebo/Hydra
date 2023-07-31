@@ -4,37 +4,37 @@ import pygame, random, time
 class Player:
     def __init__(self, position, color, projectile_Sound):
         self.position = position
+        self.color = color
+        self.projectile_Sound = projectile_Sound
         self.speed = 500
         self.projectile_speed = 750
-        self.color = color
         self.projectile_cooldown = 500
         self.last_projectile_time = 0
-        self.last_Direction = 'w'
         self.score = 0
         self.radius = 20
+        self.last_Direction = 'w'
         self.can_move = True
-        self.projectile_Sound = projectile_Sound
-
+        
     def move(self, keys, dt, screen_width, screen_height):
         if not self.can_move:
             return
 
-        if keys[pygame.K_w]:
+        if keys[pygame.K_w] or keys[pygame.K_UP]:
             self.position.y -= self.speed * dt
             self.last_Direction = 'w'
             if self.position.y < 0:
                 self.position.y = screen_height
-        if keys[pygame.K_s]:
+        if keys[pygame.K_s] or keys[pygame.K_DOWN]:
             self.position.y += self.speed * dt
             self.last_Direction = 's'
             if self.position.y > screen_height:
                 self.position.y = 0
-        if keys[pygame.K_a]:
+        if keys[pygame.K_a] or keys[pygame.K_LEFT]:
             self.position.x -= self.speed * dt
             self.last_Direction = 'a'
             if self.position.x < 0:
                 self.position.x = screen_width
-        if keys[pygame.K_d]:
+        if keys[pygame.K_d] or keys[pygame.K_RIGHT]:
             self.position.x += self.speed * dt
             self.last_Direction = 'd'
             if self.position.x > screen_width:
@@ -125,7 +125,6 @@ class Enemy:
         self.temp_color = self.color
         self.count = count
         self.speed = 200 + count
-        self.jitter = 100 + (count * 10)
         self.radius = 20
         self.can_move = True
         self.is_dead = False
@@ -142,15 +141,6 @@ class Enemy:
 
         if not self.can_move or self.is_dead or self.is_frozen:
             return
-        
-        if self.jitter < 400:
-            self.jitter += (1/40)
-
-        random_Offset = random.randint(0,int(self.jitter))
-        if random_Offset % 2 == 0:
-            enemy_speed += random_Offset
-        else:
-            enemy_speed -= random_Offset
 
         if not self.boss_exists:
             if player_pos.x > self.position.x:
@@ -169,7 +159,7 @@ class Enemy:
             if self.screen.get_height() + 50 > self.position.y:
                 self.position.y += enemy_speed * dt * 1.25
 
-    def draw(self, surface):
+    def draw(self, surface, dt):
         if self.is_frozen:
             self.color = 'blue'
             self.frozen_end = time.time()
@@ -181,7 +171,7 @@ class Enemy:
             self.color = self.temp_color
 
         if self.is_dead:
-            self.dead_color -= 1
+            self.dead_color -= (1 * (dt*1000))
             if self.dead_color < 0:
                 return False
             
@@ -290,8 +280,9 @@ class Powerup:
 
         return distance <= player.radius + 10
     
-    def draw(self, screen):
+    def draw(self, screen, dt):
         #powerup color and timing logic
+        dt = dt * 100
         end_Time = time.time()
         time_Active = end_Time - self.start_Time
 
@@ -313,12 +304,12 @@ class Powerup:
                     self.color = 'dodgerblue'
 
             case 'Shooting':
-                if self.color[1] < 255:
-                    self.color = (0,self.color[1]+1,0)
-                elif self.color[2] < 255:
-                    self.color = (0,self.color[1],self.color[2]+1)
-                elif self.color[0] < 255:
-                    self.color = (self.color[0]+1,self.color[1],self.color[2])
+                if self.color[1]+1*dt < 255:
+                    self.color = (0,self.color[1]+1*dt,0)
+                elif self.color[2]+1*dt < 255:
+                    self.color = (0,self.color[1],self.color[2]+1*dt)
+                elif self.color[0]+1*dt < 255:
+                    self.color = (self.color[0]+1*dt,self.color[1],self.color[2])
 
             case 'Speed':
                 if round(time_Active,0) % 2 == 0:
@@ -329,8 +320,10 @@ class Powerup:
                 message_text = self.message_font.render(self.message, True, self.color)
                 text_width = message_text.get_width()
                 text_height = message_text.get_height()
-                if self.color_value > 0:
-                    self.color_value -= 1
+                if self.color_value - 1.5*dt > 0:
+                    self.color_value -= 1.5*dt
+                else:
+                    return False
                 self.color = (self.color_value,self.color_value,self.color_value)
                 
         #draw
@@ -344,13 +337,10 @@ class Boss:
     def __init__(self, health, screen, sound):
         self.position = pygame.Vector2(screen.get_width() / 2,-screen.get_width() * 1.125 - 75)
         self.color = 'brown2' #this is not brown lol
-        self.speed = 10
         self.health = health
         self.max_health = self.health
         self.radius = screen.get_width() * 1.125
-        self.shake_dir = 'left'
         self.intro_complete = False
-        self.timer = 0
         self.projectile_cooldown = 1000
         self.projectile_speed = 200
         self.last_projectile_time = 0
@@ -373,22 +363,8 @@ class Boss:
             if self.position.y < (-self.screen.get_width()):
                 self.position.y += self.speed * dt
 
-                #shake logic
-                random_delay = 12
-                random_dist = random.randint(10,15)
-
-                if self.timer % random_delay == 0:
-                    if self.shake_dir == 'left':
-                        self.shake_dir = 'right'
-                        self.position.x = (self.screen.get_width() / 2) + random_dist
-                    else:
-                        self.shake_dir = 'left'
-                        self.position.x = (self.screen.get_width() / 2) - random_dist
-                
-                if self.health_color[1] < 255:
-                    self.health_color = (0,self.health_color[1] + 0.25,0)
-
-                self.timer += 1
+                if self.health_color[1] + 0.1*(dt*1000) < 255:
+                    self.health_color = (0,self.health_color[1] + 0.1*(dt*1000),0)
             else:
                 self.intro_complete = True
         else:
@@ -399,7 +375,7 @@ class Boss:
             self.is_dead = True
 
         if self.is_dead:
-            self.dead_color -= 0.5
+            self.dead_color -= 0.1 * (dt*1000)
             if self.dead_color < 0:
                 return False
             
