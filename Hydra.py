@@ -266,7 +266,6 @@ while not game_start and running:
 for i in range(enemy_count):
     enemies.append(Enemy(len(enemies), screen, enemy_die_Sound))
 the_boss = []
-print('test')
 
 #main loop
 clock = pygame.time.Clock()
@@ -414,6 +413,6 @@ while running:
         screen.blit(debug_text, (10, screen.get_height() - 50))
 
     pygame.display.update()
-    dt = clock.tick(200) / 1000
+    dt = clock.tick(1000) / 1000
 
 pygame.quit()
