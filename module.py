@@ -264,14 +264,23 @@ class Projectile:
 
 
 class Powerup:
-    def __init__(self, screen, type):
+    def __init__(self, screen, type, message = ''):
         rand_x = random.randint(10, screen.get_width() - 10)
         rand_y = random.randint(10, screen.get_height() - 10)
+        self.rand = random.randint(-200,200)
         self.position = pygame.Vector2(rand_x, rand_y)
         self.is_active = True
         self.start_Time = time.time()
         self.type = type
-        self.color = (0,0,0)
+        self.message = message
+        self.message_font = pygame.font.Font(None, 75)
+        if self.type == 'Message':
+            self.display_time = 2
+            self.color_value = 255
+        else:
+            self.display_time = 6
+            self.color_value = 0
+        self.color = (self.color_value,self.color_value,self.color_value)
 
     def collides_with(self, player):
         if not self.is_active:
@@ -286,8 +295,8 @@ class Powerup:
         end_Time = time.time()
         time_Active = end_Time - self.start_Time
 
-        #timeout after 6 seconds
-        if time_Active > 6:
+        #timeout after display_time seconds
+        if time_Active > self.display_time:
                 self.is_active = False
 
         if not self.is_active:
@@ -316,9 +325,19 @@ class Powerup:
                     self.color = 'aquamarine1'
                 else:
                     self.color = 'gold'
-
+            case 'Message':
+                message_text = self.message_font.render(self.message, True, self.color)
+                text_width = message_text.get_width()
+                text_height = message_text.get_height()
+                if self.color_value > 0:
+                    self.color_value -= 1
+                self.color = (self.color_value,self.color_value,self.color_value)
+                
         #draw
-        pygame.draw.circle(screen, self.color, (self.position.x, self.position.y), 10)
+        if self.type == 'Message':
+            screen.blit(message_text, ((screen.get_width() - text_width) // 2, (screen.get_height() - text_height) // 3 + self.rand))
+        else:
+            pygame.draw.circle(screen, self.color, (self.position.x, self.position.y), 10)
 
 
 class Boss:
