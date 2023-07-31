@@ -14,32 +14,36 @@ class Player:
         self.radius = 20
         self.last_Direction = 'w'
         self.can_move = True
+        self.key_pressed = False
         
     def move(self, keys, dt, screen_width, screen_height):
         if not self.can_move:
             return
-
+        
         if keys[pygame.K_w] or keys[pygame.K_UP]:
-            self.position.y -= self.speed * dt
             self.last_Direction = 'w'
+            self.position.y -= self.speed * dt
             if self.position.y < 0:
-                self.position.y = screen_height
+                    self.position.y = screen_height
+
         if keys[pygame.K_s] or keys[pygame.K_DOWN]:
-            self.position.y += self.speed * dt
             self.last_Direction = 's'
+            self.position.y += self.speed * dt
             if self.position.y > screen_height:
-                self.position.y = 0
+                    self.position.y = 0
+
         if keys[pygame.K_a] or keys[pygame.K_LEFT]:
-            self.position.x -= self.speed * dt
             self.last_Direction = 'a'
+            self.position.x -= self.speed * dt
             if self.position.x < 0:
-                self.position.x = screen_width
+                    self.position.x = screen_width
+                    
         if keys[pygame.K_d] or keys[pygame.K_RIGHT]:
-            self.position.x += self.speed * dt
             self.last_Direction = 'd'
+            self.position.x += self.speed * dt
             if self.position.x > screen_width:
-                self.position.x = 0
-        #for diagonal projectiles and pupil
+                    self.position.x = 0
+
         if keys[pygame.K_w] and keys[pygame.K_a]:
             self.last_Direction = 'wa'
         if keys[pygame.K_w] and keys[pygame.K_d]:
@@ -49,6 +53,15 @@ class Player:
         if keys[pygame.K_s] and keys[pygame.K_d]:
             self.last_Direction = 'sd'
 
+        if keys[pygame.K_UP] and keys[pygame.K_LEFT]:
+            self.last_Direction = 'wa'
+        if keys[pygame.K_UP] and keys[pygame.K_RIGHT]:
+            self.last_Direction = 'wd'
+        if keys[pygame.K_DOWN] and keys[pygame.K_LEFT]:
+            self.last_Direction = 'sa'
+        if keys[pygame.K_DOWN] and keys[pygame.K_RIGHT]:
+            self.last_Direction = 'sd'
+       
     def draw(self, surface):
         #main circle
         pygame.draw.circle(surface, self.color, self.position, 20)
