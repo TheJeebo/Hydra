@@ -9,7 +9,7 @@ def reset_game(boss_Count):
     projectiles.clear()
     powerUps.clear()
     the_boss.clear()
-    background_sound.set_volume(0.75) #0.75
+    background_sound.set_volume(0.5)
     player.position = pygame.Vector2(screen.get_width() / 2, screen.get_height() / 2)
     player.can_move = True
     player.projectile_cooldown = 500
@@ -65,6 +65,7 @@ def powerup_logic(powerUps):
                 player.projectile_speed += 10
 
 def projectile_logic(projectiles, enemy_count, game_over, player_died):
+    #returns enemy_count unless Boss projectile hits player, then returns True
     for projectile in projectiles:
         if is_out_of_bounds(projectile, screen.get_width(), screen.get_height()):
                 projectiles.remove(projectile)
@@ -76,17 +77,19 @@ def projectile_logic(projectiles, enemy_count, game_over, player_died):
         projectile.draw(screen)
 
         if len(the_boss) > 0:
+            #player hitting boss logic
             if projectile.type == 'Player' and projectile.collides_with(the_boss[0]):
                 enemy_die_Sound.play()
                 projectiles.remove(projectile)
                 the_boss[0].health -= 1
 
         if projectile.type == 'Boss' and projectile.collides_with(player):
+            #player has been hit by Boss projectile, return True
             if not player_died:
                 player_die_sound.play()
                 player_died = True
             message_text = message_font.render('GAME OVER - Press E to Start Over', True, 'white')
-            background_sound.set_volume(0.25)
+            background_sound.set_volume(0.2)
             text_width = message_text.get_width()
             text_height = message_text.get_height()
             screen.blit(message_text, ((screen.get_width() - text_width) // 2, (screen.get_height() - text_height) // 2))
@@ -95,6 +98,7 @@ def projectile_logic(projectiles, enemy_count, game_over, player_died):
             return True
 
         for enemy in enemies:
+            #enemies hit by projectile logic
             if projectile.collides_with(enemy):
                 enemy.die()
                 projectiles.remove(projectile)
@@ -107,6 +111,7 @@ def projectile_logic(projectiles, enemy_count, game_over, player_died):
                 powerup_spawn('Speed')
 
                 #every 10 points enemy count goes up by 1 until there are 30 enemies / projectile cooldown drops by 10 until its at 100
+                #TODO enemies that are in their dying animation prevent more enemies from being spawned, not the behavior I want
                 if player.score % 10 == 0:
                     if enemy_count < 30:
                         enemy_count += 1
@@ -148,7 +153,7 @@ def enemy_logic(enemies, enemy_count, game_over, the_boss, player_died):
                 player_die_sound.play()
                 player_died = True
             message_text = message_font.render('GAME OVER - Press E to Start Over', True, 'white')
-            background_sound.set_volume(0.25)
+            background_sound.set_volume(0.2)
             text_width = message_text.get_width()
             text_height = message_text.get_height()
             screen.blit(message_text, ((screen.get_width() - text_width) // 2, (screen.get_height() - text_height) // 2))
@@ -174,16 +179,24 @@ def is_out_of_bounds(enemy, screen_width, screen_height):
 #audio variables
 pygame.init()
 pygame.mixer.init()
+
 projectile_Sound = pygame.mixer.Sound('Audio//projectile_1.wav')
 enemy_die_Sound = pygame.mixer.Sound('Audio//enemy_die.wav')
 player_die_sound = pygame.mixer.Sound('Audio//player_die.wav')
+misc_sounds = [projectile_Sound, enemy_die_Sound, player_die_sound]
+for sound in misc_sounds:
+    sound.set_volume(0.6)
+
 powerup_sound_shooting = pygame.mixer.Sound('Audio//powerup_shooting.wav')
 powerup_sound_frozen = pygame.mixer.Sound('Audio//powerup_frozen.wav')
 powerup_sound_speed = pygame.mixer.Sound('Audio//powerup_speed.mp3')
+powerup_sounds = [powerup_sound_shooting, powerup_sound_frozen, powerup_sound_speed]
+for sound in powerup_sounds:
+    sound.set_volume(0.6)
+
 background_sound = pygame.mixer.Sound('Audio//background.mp3')
 boss_sound = pygame.mixer.Sound('Audio//Boss_Music.mp3')
-
-background_sound.set_volume(0.25) #0.25
+background_sound.set_volume(0.2)
 background_sound.play(-1)
 
 #game variables
@@ -191,11 +204,10 @@ screen = pygame.display.set_mode((1920, 1080))
 running = True
 game_over = False
 score_font = pygame.font.Font(None, 36)
-message_font = pygame.font.Font(None, 100)
-debug_font = pygame.font.Font(None, 36)
+message_font = pygame.font.Font(None, 150)
+debug_font = pygame.font.Font(None, 50)
 game_start = False
-start_message_font = pygame.font.Font(None, 100)
-start_message_text = start_message_font.render('Press E to Start', True, 'white')
+start_message_text = message_font.render('Press E to Start', True, 'white')
 
 #player variables
 player_pos = pygame.Vector2(screen.get_width() / 2, screen.get_height() / 2)
@@ -219,7 +231,7 @@ while not game_start and running:
         elif event.type == pygame.KEYDOWN:
                 if not game_start and event.key == pygame.K_e:
                     game_start = True  #Player pressed 'E', start the game
-                    background_sound.set_volume(0.75) #0.75
+                    background_sound.set_volume(0.5)
         
     
     if not game_start and running:
@@ -232,7 +244,6 @@ while not game_start and running:
 #initiate enemies
 for i in range(enemy_count):
     enemies.append(Enemy(len(enemies), screen, enemy_die_Sound))
-
 the_boss = []
 
 #main loop
@@ -266,12 +277,12 @@ while running:
         if not game_over:
             player.shoot(projectiles)
 
-    temp_ = projectile_logic(projectiles, enemy_count, game_over, player_died)
-    if isinstance(temp_,bool):
-        player_died = temp_
+    projectile_Return = projectile_logic(projectiles, enemy_count, game_over, player_died)
+    if isinstance(projectile_Return,bool):
+        player_died = projectile_Return
         game_over = player_died
     else:
-        enemy_count = temp_
+        enemy_count = projectile_Return
         projectiles = [projectile for projectile in projectiles if projectile.position.y >= 0]
 
     #enemy logic
@@ -281,7 +292,7 @@ while running:
     #boss logic
     if player.score % 100 == 0 and len(the_boss) == 0 and player.score > 0:
         background_sound.fadeout(2000)
-        boss_sound.set_volume(1)
+        boss_sound.set_volume(0.7)
         boss_sound.play(-1)
         the_boss.append(Boss(boss_health, screen, projectile_Sound))
 
@@ -294,7 +305,7 @@ while running:
                 player_die_sound.play()
                 player_died = True
             message_text = message_font.render('GAME OVER - Press E to Start Over', True, 'white')
-            background_sound.set_volume(0.25)
+            background_sound.set_volume(0.2)
             text_width = message_text.get_width()
             text_height = message_text.get_height()
             screen.blit(message_text, ((screen.get_width() - text_width) // 2, (screen.get_height() - text_height) // 2))
