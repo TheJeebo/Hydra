@@ -16,6 +16,7 @@ def reset_game(boss_Count):
     player.projectile_cooldown = 500
     player.speed = 500
     player.projectile_speed = 750
+    player.boss_exists = False
     if boss_Count > 0:
         boss_sound.stop()
         background_sound.play(-1)
@@ -365,6 +366,7 @@ while running:
         background_sound.fadeout(2000)
         boss_sound.set_volume(0.7)
         boss_sound.play(-1)
+        player.boss_exists = True
         the_boss.append(Boss(boss_health, screen, projectile_Sound))
 
     if len(the_boss) > 0:
@@ -387,6 +389,7 @@ while running:
 
         if the_boss[0].health <= 0:
             boss_sound.set_volume(0.5)
+            player.boss_exists = False
             if not status:
                 player.score += int(boss_health/2)
                 boss_sound.fadeout(2000)
