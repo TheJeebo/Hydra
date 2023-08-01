@@ -16,6 +16,7 @@ class Player:
         self.can_move = True
         self.key_pressed = False
         self.boss_exists = False
+        self.god_mode = False
         
     def move(self, keys, dt, screen_width, screen_height):
         if not self.can_move:
@@ -46,13 +47,13 @@ class Player:
         if keys[pygame.K_a] or keys[pygame.K_LEFT]:
             self.last_Direction = 'a'
             self.position.x -= self.speed * dt
-            if self.position.x < 0 and not self.boss_exists:
+            if self.position.x < 0:
                     self.position.x = screen_width
                     
         if keys[pygame.K_d] or keys[pygame.K_RIGHT]:
             self.last_Direction = 'd'
             self.position.x += self.speed * dt
-            if self.position.x > screen_width and not self.boss_exists:
+            if self.position.x > screen_width:
                     self.position.x = 0
 
         if keys[pygame.K_w] and keys[pygame.K_a]:
@@ -210,9 +211,11 @@ class Enemy:
             return
 
         distance = pygame.Vector2.distance_to(player.position, self.position)
-        return distance <= player.radius
-        return False #god mode
-    
+        if player.god_mode:
+            return False #god mode
+        else:
+            return distance <= player.radius
+        
     def die(self):
         self.sound.play()
         
@@ -273,8 +276,15 @@ class Projectile:
                     distance = pygame.Vector2.distance_to(enemy.position, self.position)
                     return distance <= enemy.radius + 5
         elif self.type == 'Boss':
-            distance = pygame.Vector2.distance_to(enemy.position, self.position)
-            return distance <= enemy.radius
+            try:
+                if enemy.god_mode:
+                    return False
+                else:
+                    distance = pygame.Vector2.distance_to(enemy.position, self.position)
+                    return distance <= enemy.radius
+            except:
+                distance = pygame.Vector2.distance_to(enemy.position, self.position)
+                return distance <= enemy.radius
 
 
 class Powerup:
@@ -497,5 +507,8 @@ class Boss:
         if self.is_dead:
             return
 
-        distance = pygame.Vector2.distance_to(player.position, self.position)
-        return distance <= self.radius + 20
+        if player.god_mode:
+            return False
+        else:
+            distance = pygame.Vector2.distance_to(player.position, self.position)
+            return distance <= self.radius + 20
