@@ -15,33 +15,44 @@ class Player:
         self.last_Direction = 'w'
         self.can_move = True
         self.key_pressed = False
+        self.boss_exists = False
         
     def move(self, keys, dt, screen_width, screen_height):
         if not self.can_move:
             return
         
+        #up/down circle back doesn't work when boss is active
         if keys[pygame.K_w] or keys[pygame.K_UP]:
             self.last_Direction = 'w'
             self.position.y -= self.speed * dt
-            if self.position.y < 0:
+            if self.boss_exists:
+                if self.position.y - self.radius < 0:
+                    self.position.y = 0 + self.radius
+            else:
+                if self.position.y < 0:
                     self.position.y = screen_height
 
         if keys[pygame.K_s] or keys[pygame.K_DOWN]:
             self.last_Direction = 's'
             self.position.y += self.speed * dt
-            if self.position.y > screen_height:
+
+            if self.boss_exists:
+                if self.position.y + self.radius > screen_height:
+                    self.position.y = screen_height - self.radius
+            else:
+                if self.position.y > screen_height:
                     self.position.y = 0
 
         if keys[pygame.K_a] or keys[pygame.K_LEFT]:
             self.last_Direction = 'a'
             self.position.x -= self.speed * dt
-            if self.position.x < 0:
+            if self.position.x < 0 and not self.boss_exists:
                     self.position.x = screen_width
                     
         if keys[pygame.K_d] or keys[pygame.K_RIGHT]:
             self.last_Direction = 'd'
             self.position.x += self.speed * dt
-            if self.position.x > screen_width:
+            if self.position.x > screen_width and not self.boss_exists:
                     self.position.x = 0
 
         if keys[pygame.K_w] and keys[pygame.K_a]:
