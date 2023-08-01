@@ -29,7 +29,7 @@ def powerup_spawn(type):
     #every 5 points there is a 25% chance for a Powerup
     if player.score % 5 == 0:
         powerup_roll = random.randint(1,100)
-        if powerup_roll < 25:
+        if powerup_roll < 250:
             match type:
                 case 'Shooting':
                     if player.projectile_cooldown > 100:
@@ -78,7 +78,7 @@ def powerup_logic(powerUps):
 
             #Invincible for x time TODO set up time
             if powerup.type == 'Invincible':
-                powerup_sound_speed.play()
+                powerup_sound_invincible.play()
                 message = 'Invincible! 10 seconds'
                 player.god_mode = True
                 player.god_powerup = True
@@ -222,7 +222,9 @@ for sound in misc_sounds:
 powerup_sound_shooting = pygame.mixer.Sound('Audio//powerup_shooting.wav')
 powerup_sound_frozen = pygame.mixer.Sound('Audio//powerup_frozen.wav')
 powerup_sound_speed = pygame.mixer.Sound('Audio//powerup_speed.mp3')
-powerup_sounds = [powerup_sound_shooting, powerup_sound_frozen, powerup_sound_speed]
+powerup_sound_invincible = pygame.mixer.Sound('Audio//powerup_invincible.wav')
+powerup_sound_invincible_end = pygame.mixer.Sound('Audio//powerup_invincible_end.wav')
+powerup_sounds = [powerup_sound_shooting, powerup_sound_frozen, powerup_sound_speed, powerup_sound_invincible, powerup_sound_invincible_end]
 for sound in powerup_sounds:
     sound.set_volume(0.6)
 
@@ -245,7 +247,7 @@ game_pause = False
 
 #player variables
 player_pos = pygame.Vector2(screen.get_width() / 2, screen.get_height() / 2)
-player = Player(player_pos, 'seagreen2', projectile_Sound)
+player = Player(player_pos, projectile_Sound, powerup_sound_invincible_end)
 projectiles = []
 player_died = False
 

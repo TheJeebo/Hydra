@@ -2,9 +2,9 @@ import pygame, random, time
 
 
 class Player:
-    def __init__(self, position, color, projectile_Sound):
+    def __init__(self, position, projectile_Sound, gp_end):
         self.position = position
-        self.color = color
+        self.color = 'seagreen2'
         self.projectile_Sound = projectile_Sound
         self.speed = 500
         self.projectile_speed = 750
@@ -20,6 +20,7 @@ class Player:
         self.god_powerup = False
         self.gp_time = 0
         self.gp_total = 0
+        self.gp_end = gp_end
         
     def move(self, keys, dt, screen_width, screen_height):
         if not self.can_move:
@@ -95,6 +96,7 @@ class Player:
                 pygame.draw.circle(surface, 'black', self.position, self.radius+17)
 
                 if self.gp_total > 10:
+                    self.gp_end.play()
                     self.god_powerup = False
                     self.god_mode = False
         else:
