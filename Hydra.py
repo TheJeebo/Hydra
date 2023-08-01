@@ -17,6 +17,7 @@ def reset_game(boss_Count):
     player.speed = 500
     player.projectile_speed = 750
     player.boss_exists = False
+    player.god_mode = False
     if boss_Count > 0:
         boss_sound.stop()
         background_sound.play(-1)
