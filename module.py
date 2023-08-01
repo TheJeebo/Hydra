@@ -17,6 +17,9 @@ class Player:
         self.key_pressed = False
         self.boss_exists = False
         self.god_mode = False
+        self.god_powerup = False
+        self.gp_time = 0
+        self.gp_total = 0
         
     def move(self, keys, dt, screen_width, screen_height):
         if not self.can_move:
@@ -75,6 +78,29 @@ class Player:
             self.last_Direction = 'sd'
        
     def draw(self, surface):
+        if self.god_mode:
+            self.color = 'deeppink'
+            if self.god_powerup:
+                #once powerup is close to ending, flash white
+                gp_current = time.time()
+                self.gp_total = gp_current - self.gp_time
+
+                if self.gp_total > 7:
+                    if int(self.gp_total*10) % 2 == 0:
+                        self.color = 'white'
+                    else:
+                        self.color = 'deeppink'
+                
+                pygame.draw.circle(surface, self.color, self.position, self.radius+20)
+                pygame.draw.circle(surface, 'black', self.position, self.radius+17)
+
+                if self.gp_total > 10:
+                    self.god_powerup = False
+                    self.god_mode = False
+        else:
+            self.god_powerup = False
+            self.color = 'seagreen2'
+
         #main circle
         pygame.draw.circle(surface, self.color, self.position, 20)
 
@@ -355,6 +381,13 @@ class Powerup:
                     self.color = 'aquamarine1'
                 else:
                     self.color = 'gold'
+            
+            case 'Invincible':
+                if round(self.time_Active*10,0) % 2 == 0:
+                    self.color = 'deeppink'
+                else:
+                    self.color = 'purple4'
+
             case 'Message':
                 message_text = self.message_font.render(self.message, True, self.color)
                 text_width = message_text.get_width()

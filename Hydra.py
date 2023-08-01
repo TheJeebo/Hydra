@@ -38,6 +38,8 @@ def powerup_spawn(type):
                         powerUps.append(Powerup(screen, type))
                 case 'Frozen':
                     powerUps.append(Powerup(screen, type))
+                case 'Invincible':
+                    powerUps.append(Powerup(screen, type))
 
 def powerup_logic(powerUps):
     for powerup in powerUps:
@@ -66,12 +68,20 @@ def powerup_logic(powerUps):
                     enemy.is_frozen = True
                     enemy.frozen_start = time.time()
             
-            #speed up player, up to...
+            #speed up player, up to 700
             if powerup.type == 'Speed':
                 powerup_sound_speed.play()
                 message = 'Player Speed +10'
                 player.speed += 10
                 player.projectile_speed += 10
+
+            #Invincible for x time TODO set up time
+            if powerup.type == 'Invincible':
+                powerup_sound_speed.play()
+                message = 'Invincible! 10 seconds'
+                player.god_mode = True
+                player.god_powerup = True
+                player.gp_time = time.time()
             
             #Display powerup message
             try:
@@ -128,6 +138,7 @@ def projectile_logic(projectiles, enemy_count, game_over, player_died):
                 powerup_spawn('Shooting')
                 powerup_spawn('Frozen')
                 powerup_spawn('Speed')
+                powerup_spawn('Invincible')
 
                 #every 10 points enemy count goes up by 1 until there are 30 enemies / projectile cooldown drops by 10 until its at 100
                 #TODO enemies that are in their dying animation prevent more enemies from being spawned, not the behavior I want
@@ -243,6 +254,7 @@ enemy_count = 4
 enemies = []
 powerUps = []
 
+
 #pre-game menu
 while not game_start and running:
     for event in pygame.event.get():
@@ -267,6 +279,7 @@ while not game_start and running:
 for i in range(enemy_count):
     enemies.append(Enemy(len(enemies), screen, enemy_die_Sound))
 the_boss = []
+
 
 #main loop
 clock = pygame.time.Clock()
@@ -309,7 +322,6 @@ while running:
 
         pause_end = time.time()
         paused_time = pause_end - pause_start
-        #print(round(paused_time,1))
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -336,7 +348,7 @@ while running:
     if len(powerUps) > 0:
         for powerup in powerUps:
             powerup.draw(screen, dt, True, paused_time)
-            #print(round(powerup.time_Active,1))
+
         
     #background and check keys
     screen.fill('black')
