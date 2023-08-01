@@ -25,22 +25,26 @@ def reset_game(boss_Count):
     for i in range(4):
         enemies.append(Enemy(len(enemies), screen, enemy_die_Sound))
 
-def powerup_spawn(type):
-    #every 5 points there is a 25% chance for a Powerup
+def powerup_spawn():
+    types = ['Shooting','Speed','Frozen','Invincible']
+    
     if player.score % 5 == 0:
-        powerup_roll = random.randint(1,100)
-        if powerup_roll < 250:
-            match type:
-                case 'Shooting':
-                    if player.projectile_cooldown > 100:
+        for type in types:
+            powerup_roll = random.randint(1,100)
+            if powerup_roll < 10:
+                match type:
+                    case 'Invincible':
                         powerUps.append(Powerup(screen, type))
-                case 'Speed':
-                    if player.speed < 700:
+            if powerup_roll < 25:
+                match type:
+                    case 'Shooting':
+                        if player.projectile_cooldown > 100:
+                            powerUps.append(Powerup(screen, type))
+                    case 'Speed':
+                        if player.speed < 700:
+                            powerUps.append(Powerup(screen, type))
+                    case 'Frozen':
                         powerUps.append(Powerup(screen, type))
-                case 'Frozen':
-                    powerUps.append(Powerup(screen, type))
-                case 'Invincible':
-                    powerUps.append(Powerup(screen, type))
 
 def powerup_logic(powerUps):
     for powerup in powerUps:
@@ -136,10 +140,7 @@ def projectile_logic(projectiles, enemy_count, game_over, player_died):
                     player.score += 1
 
                 #every 5 points there is a chance for a Powerups
-                powerup_spawn('Shooting')
-                powerup_spawn('Frozen')
-                powerup_spawn('Speed')
-                powerup_spawn('Invincible')
+                powerup_spawn()
 
                 #every 10 points enemy count goes up by 1 until there are 30 enemies / projectile cooldown drops by 10 until its at 100
                 #TODO enemies that are in their dying animation prevent more enemies from being spawned, not the behavior I want
