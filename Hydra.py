@@ -289,6 +289,11 @@ while running:
                     show_debug = True
             elif event.key == pygame.K_e:
                 game_pause = True
+            elif event.key == pygame.K_F2:
+                if player.god_mode:
+                    player.god_mode = False
+                else:
+                    player.god_mode = True
 
     #pause      
     paused_time = 0
@@ -407,11 +412,11 @@ while running:
     if len(enemies) > 0:
         debug_text = debug_font.render('Cooldown: ' + str(player.projectile_cooldown) + ' Enemies: ' + str(len(enemies)) + 
                                     ' dt: ' + str(dt) +' e_speed: ' + str(round(enemies[0].speed,0)) +' player speed: ' + str(round(player.speed,0)) + 
-                                    ' projectiles : ' + str(len(projectiles)), True, 'white')
+                                    ' projectiles : ' + str(len(projectiles)) + ' god mode: ' + str(player.god_mode), True, 'white')
     else:
         debug_text = debug_font.render('Cooldown: ' + str(player.projectile_cooldown) + ' Enemies: ' + str(len(enemies)) + 
                                     ' dt: ' + str(dt) +' e_speed: 0' + ' player speed: ' + str(round(player.speed,0)) +
-                                    ' projectiles : ' + str(len(projectiles)), True, 'white')
+                                    ' projectiles : ' + str(len(projectiles)) + ' god mode: ' + str(player.god_mode), True, 'white')
     if show_debug:
         screen.blit(debug_text, (10, screen.get_height() - 50))
 
