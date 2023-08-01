@@ -27,7 +27,7 @@ def reset_game(boss_Count):
 
 def powerup_spawn():
     types = ['Shooting','Speed','Frozen','Invincible']
-    
+
     if player.score % 5 == 0:
         for type in types:
             powerup_roll = random.randint(1,100)
@@ -169,7 +169,7 @@ def enemy_logic(enemies, enemy_count, game_over, the_boss, player_died):
             if is_out_of_bounds(enemy, screen.get_width(), screen.get_height()):
                 enemies.remove(enemy)
 
-        enemy.move(player.position, dt)
+        enemy.move(player, dt)
         status = enemy.draw(screen, dt)
         if enemy.speed < 300:
             enemy.speed += 1/100

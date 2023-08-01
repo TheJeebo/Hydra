@@ -171,7 +171,9 @@ class Enemy:
                         (screen.get_width(), screen.get_height()), (0, screen.get_height() / 2), 
                         (screen.get_width(), screen.get_height() / 2), (screen.get_width() / 2, 0), 
                         (screen.get_width() / 2, screen.get_height())]
+        enemy_Personalities = ['normal','ahead'] #'normal' 'goofy'
 
+        self.personality = enemy_Personalities[random.randint(0,len(enemy_Personalities)-1)]
         self.vertices = enemy_Shapes[random.randint(0,len(enemy_Shapes)-1)]
         self.position = pygame.Vector2(enemy_Spawns[random.randint(0,len(enemy_Spawns)-1)])
         self.color = enemy_Colors[random.randint(0,len(enemy_Colors)-1)]
@@ -189,8 +191,29 @@ class Enemy:
         self.screen = screen
         self.sound = sound
 
-    def move(self, player_pos, dt):
+    def move(self, player, dt):
+        player_pos = player.position.copy()
         enemy_speed = self.speed
+
+        if self.personality == 'ahead':
+            distance = pygame.Vector2.distance_to(player.position, self.position)
+            if distance <= player.radius + 200:
+                offset = 0
+            else:
+                offset = 30
+            match player.last_Direction:
+                case 'w':
+                    player_pos.y -= offset
+                    player_pos.x -= offset
+                case 's':
+                    player_pos.y += offset
+                    player_pos.x += offset
+                case 'a':
+                    player_pos.x -= offset
+                    player_pos.y -= offset
+                case 'd':
+                    player_pos.x += offset
+                    player_pos.y += offset
 
         if not self.can_move or self.is_dead or self.is_frozen:
             return
