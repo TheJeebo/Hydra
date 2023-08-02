@@ -171,7 +171,7 @@ class Enemy:
                         (screen.get_width(), screen.get_height()), (0, screen.get_height() / 2), 
                         (screen.get_width(), screen.get_height() / 2), (screen.get_width() / 2, 0), 
                         (screen.get_width() / 2, screen.get_height())]
-        enemy_Personalities = ['normal','ahead'] #'normal' 'goofy'
+        enemy_Personalities = ['normal','normal','normal','dodgy','glitchy']
 
         self.personality = enemy_Personalities[random.randint(0,len(enemy_Personalities)-1)]
         self.vertices = enemy_Shapes[random.randint(0,len(enemy_Shapes)-1)]
@@ -190,17 +190,19 @@ class Enemy:
         self.boss_exists = False
         self.screen = screen
         self.sound = sound
+        self.offset = random.randint(0,50)
+        self.cooldown = 10
+        self.last_time = 0
 
     def move(self, player, dt):
         player_pos = player.position.copy()
         enemy_speed = self.speed
 
-        if self.personality == 'ahead':
+        if self.personality == 'dodgy':
+            offset = self.offset
             distance = pygame.Vector2.distance_to(player.position, self.position)
-            if distance <= player.radius + 200:
+            if distance <= player.radius + random.randint(100,300):
                 offset = 0
-            else:
-                offset = 30
             match player.last_Direction:
                 case 'w':
                     player_pos.y -= offset
@@ -214,9 +216,35 @@ class Enemy:
                 case 'd':
                     player_pos.x += offset
                     player_pos.y += offset
-
+        
         if not self.can_move or self.is_dead or self.is_frozen:
             return
+
+        if self.personality == 'glitchy':
+            current_time = pygame.time.get_ticks()
+            can_twitch = current_time - self.last_time > self.cooldown
+
+            if can_twitch:
+                self.last_time = pygame.time.get_ticks()
+                offset = random.randint(0,100)
+
+                match offset:
+                    case 0:
+                        self.boss_exists = True
+                    case 1:
+                        enemy_speed += 50
+                    case 2:
+                        enemy_speed -= 50
+                    case 4:
+                        self.position.x += 30
+                    case 5:
+                        self.position.x -= 30
+                    case 6:
+                        self.position.y += 30
+                    case 7:
+                        self.position.y -= 30
+                    case _:
+                        self.boss_exists = False
 
         if not self.boss_exists:
             if player_pos.x > self.position.x:
