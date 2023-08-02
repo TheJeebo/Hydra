@@ -7,7 +7,6 @@ class Player:
         self.color = 'seagreen2'
         self.projectile_Sound = projectile_Sound
         self.speed = 500
-        self.projectile_speed = 750
         self.projectile_cooldown = 500
         self.last_projectile_time = 0
         self.score = 0
@@ -17,10 +16,21 @@ class Player:
         self.key_pressed = False
         self.boss_exists = False
         self.god_mode = False
+
         self.god_powerup = False
         self.gp_time = 0
         self.gp_total = 0
         self.gp_end = gp_end
+
+        self.homing_powerup = False 
+        self.h_time = 0
+        self.h_total = 0
+        self.h_end = gp_end
+
+        if self.homing_powerup:
+            self.projectile_speed = 500
+        else:
+            self.projectile_speed = 750
         
     def move(self, keys, dt, screen_width, screen_height):
         if not self.can_move:
@@ -103,6 +113,13 @@ class Player:
             self.god_powerup = False
             self.color = 'seagreen2'
 
+        if self.homing_powerup:
+            h_current = time.time()
+            self.h_total = h_current - self.h_time
+
+            if self.h_total > 10:
+                self.homing_powerup = False
+
         #main circle
         pygame.draw.circle(surface, self.color, self.position, 20)
 
@@ -154,7 +171,10 @@ class Player:
                 case 'sd':
                     projectile_Direction = pygame.Vector2(projectile_velocity, projectile_velocity)
 
-            new_projectile = Projectile(self.position.copy(), projectile_Direction)
+            if self.homing_powerup:
+                new_projectile = Projectile(self.position.copy(), self.projectile_speed, homing=self.homing_powerup)
+            else:
+                new_projectile = Projectile(self.position.copy(), projectile_Direction)
             projectiles.append(new_projectile)
 
 
@@ -302,12 +322,13 @@ class Enemy:
 
 
 class Projectile:
-    def __init__(self, position, velocity, type='Player'):
+    def __init__(self, position, velocity, type='Player', homing=False):
         self.position = position
         self.velocity = velocity
         self.color = 'white'
         self.size = 5
         self.can_move = True
+        self.homing = homing
         self.type = type
         self.last_color_change = 0
         self.radius = 5
@@ -317,18 +338,39 @@ class Projectile:
             self.color_cooldown = 212
         self.color_bool = True
 
-    def update(self, dt):
+    def update(self, dt, enemies):
         if not self.can_move:
             return
         
-        self.position += self.velocity * dt
+        if len(enemies) <= 0:
+            self.homing = False
+
+        if self.homing:
+            target = 10000
+            for enemy in enemies:
+                distance = pygame.Vector2.distance_to(enemy.position, self.position)
+                if distance < target:
+                    target = distance
+                    enemy_pos = enemy.position.copy()
+            
+            if enemy_pos.x > self.position.x:
+                self.position.x += self.velocity * dt
+            if enemy_pos.x < self.position.x:
+                self.position.x -= self.velocity * dt
+            if enemy_pos.y > self.position.y:
+                self.position.y += self.velocity * dt
+            if enemy_pos.y < self.position.y:
+                self.position.y -= self.velocity * dt
+            
+        else:
+            self.position += self.velocity * dt
 
     def draw(self, surface):
         current_time = pygame.time.get_ticks()
         dif = current_time - self.last_color_change
 
         if dif > self.color_cooldown:
-            if self.color_bool and self.type == 'Player':
+            if self.color_bool and self.type == 'Player'and not self.homing:
                 self.color = 'deepskyblue'
                 self.size = 10
                 self.color_bool = False
@@ -336,6 +378,15 @@ class Projectile:
                 self.color = 'crimson'
                 self.size = 10
                 self.color_bool = False
+            elif self.color_bool and self.type == 'Player' and self.homing:
+                self.color = 'indianred1'
+                self.size = 10
+                self.color_bool = False
+            elif not self.color_bool and self.type == 'Player' and self.homing:
+                self.color = 'orangered4'
+                self.size = 5
+                self.color_bool = False
+                self.color_bool = True
             else:
                 self.color = 'white'
                 self.size = 5
@@ -440,6 +491,12 @@ class Powerup:
                     self.color = 'deeppink'
                 else:
                     self.color = 'purple4'
+            
+            case 'Homing':
+                if round(self.time_Active*10,0) % 2 == 0:
+                    self.color = 'indianred1'
+                else:
+                    self.color = 'orangered4'
 
             case 'Message':
                 message_text = self.message_font.render(self.message, True, self.color)

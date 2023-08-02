@@ -15,6 +15,7 @@ def reset_game(boss_Count):
     player.can_move = True
     player.projectile_cooldown = 500
     player.speed = 500
+    player.homing_powerup = False
     player.projectile_speed = 750
     player.boss_exists = False
     player.god_mode = False
@@ -26,16 +27,20 @@ def reset_game(boss_Count):
         enemies.append(Enemy(len(enemies), screen, enemy_die_Sound))
 
 def powerup_spawn():
-    types = ['Shooting','Speed','Frozen','Invincible']
+    types = ['Shooting','Speed','Frozen','Invincible','Homing']
 
     if player.score % 5 == 0:
         for type in types:
             powerup_roll = random.randint(1,100)
             if powerup_roll < 10:
+                #rare
                 match type:
                     case 'Invincible':
                         powerUps.append(Powerup(screen, type))
+                    case 'Homing':
+                        powerUps.append(Powerup(screen, type))
             if powerup_roll < 25:
+                #common
                 match type:
                     case 'Shooting':
                         if player.projectile_cooldown > 100:
@@ -45,7 +50,7 @@ def powerup_spawn():
                             powerUps.append(Powerup(screen, type))
                     case 'Frozen':
                         powerUps.append(Powerup(screen, type))
-
+                    
 def powerup_logic(powerUps):
     for powerup in powerUps:
         active = powerup.draw(screen, dt)
@@ -80,13 +85,20 @@ def powerup_logic(powerUps):
                 player.speed += 10
                 player.projectile_speed += 10
 
-            #Invincible for x time TODO set up time
+            #Invincible for 10 seconds
             if powerup.type == 'Invincible':
                 powerup_sound_invincible.play()
                 message = 'Invincible! 10 seconds'
                 player.god_mode = True
                 player.god_powerup = True
                 player.gp_time = time.time()
+            
+            #homing bullet, chases closest target
+            if powerup.type == 'Homing':
+                powerup_sound_shooting.play()
+                message = 'Homing Bullets! 10 seconds'
+                player.homing_powerup = True
+                player.h_time = time.time()
             
             #Display powerup message
             try:
@@ -103,7 +115,7 @@ def projectile_logic(projectiles, enemy_count, game_over, player_died):
         if game_over:
             projectile.can_move = False
 
-        projectile.update(dt)
+        projectile.update(dt, enemies)
         projectile.draw(screen)
 
         if len(the_boss) > 0:
@@ -388,9 +400,12 @@ while running:
         boss_sound.set_volume(0.7)
         boss_sound.play(-1)
         player.boss_exists = True
+        player.homing_powerup = False
         the_boss.append(Boss(boss_health, screen, projectile_Sound))
 
     if len(the_boss) > 0:
+        player.homing_powerup = False
+
         if player_died:
             the_boss[0].can_move = False
 
