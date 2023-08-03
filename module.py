@@ -470,7 +470,6 @@ class Projectile:
             else:
                 self.position += self.velocity * dt
 
-
     def draw(self, surface):
         current_time = pygame.time.get_ticks()
         dif = current_time - self.last_color_change

@@ -40,7 +40,7 @@ def powerup_spawn():
                         powerUps.append(Powerup(screen, type))
                     case 'Homing':
                         powerUps.append(Powerup(screen, type))
-            if powerup_roll < 25:
+            if powerup_roll < 20:
                 #common
                 match type:
                     case 'Shooting':
@@ -140,11 +140,7 @@ def projectile_logic(projectiles, enemy_count, game_over, player_died):
             if not player_died:
                 player_die_sound.play()
                 player_died = True
-            message_text = message_font.render('GAME OVER - Press E to Start Over', True, 'white')
-            background_sound.set_volume(0.2)
-            text_width = message_text.get_width()
-            text_height = message_text.get_height()
-            screen.blit(message_text, ((screen.get_width() - text_width) // 2, (screen.get_height() - text_height) // 2))
+            game_over_message()
             game_over = True
             player.can_move = False
             return True
@@ -207,11 +203,7 @@ def enemy_logic(enemies, enemy_count, game_over, the_boss, player_died):
             if not player_died:
                 player_die_sound.play()
                 player_died = True
-            message_text = message_font.render('GAME OVER - Press E to Start Over', True, 'white')
-            background_sound.set_volume(0.2)
-            text_width = message_text.get_width()
-            text_height = message_text.get_height()
-            screen.blit(message_text, ((screen.get_width() - text_width) // 2, (screen.get_height() - text_height) // 2))
+            game_over_message()
             game_over = True
             player.can_move = False
             return True
@@ -229,6 +221,13 @@ def is_out_of_bounds(object, screen_width, screen_height):
         object.position.x > screen_width + object.radius or
         object.position.y < -object.radius or
         object.position.y > screen_height + object.radius)
+
+def game_over_message():
+    message_text = message_font.render('GAME OVER - Press E to Start Over', True, 'white')
+    background_sound.set_volume(0.2)
+    text_width = message_text.get_width()
+    text_height = message_text.get_height()
+    screen.blit(message_text, ((screen.get_width() - text_width) // 2, (screen.get_height() - text_height) // 2))
 
 
 #audio variables
@@ -423,11 +422,7 @@ while running:
             if not player_died:
                 player_die_sound.play()
                 player_died = True
-            message_text = message_font.render('GAME OVER - Press E to Start Over', True, 'white')
-            background_sound.set_volume(0.2)
-            text_width = message_text.get_width()
-            text_height = message_text.get_height()
-            screen.blit(message_text, ((screen.get_width() - text_width) // 2, (screen.get_height() - text_height) // 2))
+            game_over_message()
             game_over = True
             player.can_move = False
 
@@ -460,6 +455,9 @@ while running:
                                     ' projectiles : ' + str(len(projectiles)) + ' god mode: ' + str(player.god_mode), True, 'white')
     if show_debug:
         screen.blit(debug_text, (10, screen.get_height() - 50))
+
+    if game_over:
+        game_over_message()
 
     pygame.display.update()
     dt = clock.tick(1000) / 1000
