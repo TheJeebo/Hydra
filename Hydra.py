@@ -20,6 +20,7 @@ def reset_game(boss_Count):
     player.projectile_speed = 750
     player.boss_exists = False
     player.god_mode = False
+    boss_health = 100
     if boss_Count > 0:
         boss_sound.stop()
         background_sound.play(-1)
@@ -274,7 +275,7 @@ projectiles = []
 player_died = False
 
 #initialize enemies
-boss_health = 50
+boss_health = 25
 enemy_count = 4
 enemies = []
 powerUps = []
@@ -373,8 +374,7 @@ while running:
     if len(powerUps) > 0:
         for powerup in powerUps:
             powerup.draw(screen, dt, True, paused_time)
-
-        
+  
     #background and check keys
     screen.fill('black')
     keys = pygame.key.get_pressed()
@@ -404,7 +404,7 @@ while running:
     game_over = player_died
 
     #boss logic
-    if player.score % 100 == 0 and len(the_boss) == 0 and player.score > 0:
+    if player.score == (boss_health*3) and len(the_boss) == 0 and player.score > 0:
         background_sound.fadeout(2000)
         boss_sound.set_volume(0.7)
         boss_sound.play(-1)
@@ -432,15 +432,16 @@ while running:
             boss_sound.set_volume(0.5)
             player.boss_exists = False
             if not status:
-                player.score += int(boss_health/2)
+                player.score += int(boss_health/4)
+                boss_health *= 2
                 boss_sound.fadeout(2000)
                 background_sound.play(-1)
                 the_boss.remove(the_boss[0])
 
                 for i in range(enemy_count - len(enemies)):
-                            enemies.append(Enemy(enemy_count, screen, enemy_die_Sound))
+                    enemies.append(Enemy(enemy_count, screen, enemy_die_Sound))
 
-    #scoreboard
+    #score
     score_text = score_font.render('Score: ' + str(player.score), True, 'white')
     screen.blit(score_text, (10, 10))
 
@@ -448,11 +449,13 @@ while running:
     if len(enemies) > 0:
         debug_text = debug_font.render('Cooldown: ' + str(player.projectile_cooldown) + ' Enemies: ' + str(len(enemies)) + 
                                     ' dt: ' + str(dt) +' e_speed: ' + str(round(enemies[0].speed,0)) +' player speed: ' + str(round(player.speed,0)) + 
-                                    ' projectiles : ' + str(len(projectiles)) + ' god mode: ' + str(player.god_mode), True, 'white')
+                                    ' projectiles : ' + str(len(projectiles)) + ' god mode: ' + str(player.god_mode) +
+                                    'b_health: ' + str(boss_health), True, 'white')
     else:
         debug_text = debug_font.render('Cooldown: ' + str(player.projectile_cooldown) + ' Enemies: ' + str(len(enemies)) + 
                                     ' dt: ' + str(dt) +' e_speed: 0' + ' player speed: ' + str(round(player.speed,0)) +
-                                    ' projectiles : ' + str(len(projectiles)) + ' god mode: ' + str(player.god_mode), True, 'white')
+                                    ' projectiles : ' + str(len(projectiles)) + ' god mode: ' + str(player.god_mode) +
+                                    'b_health: ' + str(boss_health), True, 'white')
     if show_debug:
         screen.blit(debug_text, (10, screen.get_height() - 50))
 
