@@ -16,6 +16,7 @@ def reset_game(boss_Count):
     player.projectile_cooldown = 500
     player.speed = 500
     player.homing_powerup = False
+    player.multi_powerup = False
     player.projectile_speed = 750
     player.boss_exists = False
     player.god_mode = False
@@ -27,7 +28,7 @@ def reset_game(boss_Count):
         enemies.append(Enemy(len(enemies), screen, enemy_die_Sound))
 
 def powerup_spawn():
-    types = ['Shooting','Speed','Frozen','Invincible','Homing']
+    types = ['Shooting','Speed','Frozen','Invincible','Homing','Multi']
 
     if player.score % 5 == 0:
         for type in types:
@@ -49,6 +50,8 @@ def powerup_spawn():
                         if player.speed < 700:
                             powerUps.append(Powerup(screen, type))
                     case 'Frozen':
+                        powerUps.append(Powerup(screen, type))
+                    case 'Multi':
                         powerUps.append(Powerup(screen, type))
                     
 def powerup_logic(powerUps):
@@ -99,6 +102,13 @@ def powerup_logic(powerUps):
                 message = 'Homing Bullets! 10 seconds'
                 player.homing_powerup = True
                 player.h_time = time.time()
+            
+            #homing bullet, chases closest target
+            if powerup.type == 'Multi':
+                powerup_sound_shooting.play()
+                message = 'Multi Bullets! 10 seconds'
+                player.multi_powerup = True
+                player.m_time = time.time()
             
             #Display powerup message
             try:

@@ -25,7 +25,10 @@ class Player:
         self.homing_powerup = False 
         self.h_time = 0
         self.h_total = 0
-        self.h_end = gp_end
+
+        self.multi_powerup = False 
+        self.m_time = 0
+        self.m_total = 0
 
         if self.homing_powerup:
             self.projectile_speed = 500
@@ -117,6 +120,14 @@ class Player:
 
             if self.h_total > 10:
                 self.homing_powerup = False
+        elif self.multi_powerup:
+            m_current = time.time()
+            self.m_total = m_current - self.m_time
+
+            self.color = 'lawngreen'
+
+            if self.m_total > 10:
+                self.multi_powerup = False
         else:
             self.god_powerup = False
             self.color = 'seagreen2'
@@ -147,7 +158,85 @@ class Player:
         current_time = pygame.time.get_ticks()
         return current_time - self.last_projectile_time > self.projectile_cooldown
 
-    def shoot(self, projectiles):
+    def shoot(self, projectiles, multi=False, left_right=''):
+        if multi:
+            #either go left or right of the current direction
+            self.last_projectile_time = pygame.time.get_ticks()
+            projectile_velocity = self.projectile_speed
+            new_direction = ''
+
+            #there's probably a better way, I could number the directions and just + or - 1, but I think I would need to change a lot so here we goooooo
+            match self.last_Direction:
+                case 'w':
+                    if left_right == 'left':
+                        new_direction = 'wa'
+                    elif left_right == 'right':
+                        new_direction = 'wd'
+                case 's':
+                    if left_right == 'left':
+                        new_direction = 'sd'
+                    elif left_right == 'right':
+                        new_direction = 'sa'
+                case 'a':
+                    if left_right == 'left':
+                        new_direction = 'sa'
+                    elif left_right == 'right':
+                        new_direction = 'wa'
+                case 'd':
+                    if left_right == 'left':
+                        new_direction = 'sd'
+                    elif left_right == 'right':
+                        new_direction = 'wd'
+
+                case 'wa':
+                    if left_right == 'left':
+                        new_direction = 'a'
+                    elif left_right == 'right':
+                        new_direction = 'w'
+                case 'wd':
+                    if left_right == 'left':
+                        new_direction = 'w'
+                    elif left_right == 'right':
+                        new_direction = 'd'
+                case 'sa':
+                    if left_right == 'left':
+                        new_direction = 'a'
+                    elif left_right == 'right':
+                        new_direction = 's'
+                case 'sd':
+                    if left_right == 'left':
+                        new_direction = 's'
+                    elif left_right == 'right':
+                        new_direction = 'd'
+            
+            match new_direction:
+                case 'w':
+                    projectile_Direction = pygame.Vector2(0, -projectile_velocity)
+                case 's':
+                    projectile_Direction = pygame.Vector2(0, projectile_velocity)
+                case 'a':
+                    projectile_Direction = pygame.Vector2(-projectile_velocity, 0)
+                case 'd':
+                    projectile_Direction = pygame.Vector2(projectile_velocity, 0)
+                case 'wa':
+                    projectile_Direction = pygame.Vector2(-projectile_velocity, -projectile_velocity)
+                case 'wd':
+                    projectile_Direction = pygame.Vector2(projectile_velocity, -projectile_velocity)
+                case 'sa':
+                    projectile_Direction = pygame.Vector2(-projectile_velocity, projectile_velocity)
+                case 'sd':
+                    projectile_Direction = pygame.Vector2(projectile_velocity, projectile_velocity)
+
+            #that's right, we're stacking powerups baby
+            if self.homing_powerup:
+                new_projectile = Projectile(self.position.copy(), self.projectile_speed, homing=self.homing_powerup)
+            else:
+                new_projectile = Projectile(self.position.copy(), projectile_Direction)
+
+            projectiles.append(new_projectile)
+            return
+
+
         if self.can_shoot():
             self.projectile_Sound.play()
             self.last_projectile_time = pygame.time.get_ticks()
@@ -172,10 +261,20 @@ class Player:
                 case 'sd':
                     projectile_Direction = pygame.Vector2(projectile_velocity, projectile_velocity)
 
-            if self.homing_powerup:
+            if self.homing_powerup and self.multi_powerup:
                 new_projectile = Projectile(self.position.copy(), self.projectile_speed, homing=self.homing_powerup)
+                #yay recursion! this is recursive right? lol idk what i'm doing
+                self.shoot(projectiles, multi=True, left_right='left')
+                self.shoot(projectiles, multi=True, left_right='right')
+            elif self.homing_powerup:
+                new_projectile = Projectile(self.position.copy(), self.projectile_speed, homing=self.homing_powerup)
+            elif self.multi_powerup:
+                new_projectile = Projectile(self.position.copy(), projectile_Direction)
+                self.shoot(projectiles, multi=True, left_right='left')
+                self.shoot(projectiles, multi=True, left_right='right')
             else:
                 new_projectile = Projectile(self.position.copy(), projectile_Direction)
+
             projectiles.append(new_projectile)
 
 
@@ -364,10 +463,13 @@ class Projectile:
                 self.position.y -= self.velocity * dt
             
         else:
-            try:
+            if not isinstance(self.velocity, pygame.Vector2):
+                #it's a dirty fix, but in the case that a homing projectile turns off when a boss spawn we need to change
+                #the velocity back to a Vector2, this will just fly off screen
+                self.velocity = pygame.Vector2(-1000, -1000)
+            else:
                 self.position += self.velocity * dt
-            except:
-                print('Projectile Error')
+
 
     def draw(self, surface):
         current_time = pygame.time.get_ticks()
@@ -501,6 +603,12 @@ class Powerup:
                     self.color = 'indianred1'
                 else:
                     self.color = 'orangered4'
+
+            case 'Multi':
+                if round(self.time_Active,0) % 2 == 0:
+                    self.color = 'forestgreen'
+                else:
+                    self.color = 'lawngreen'
 
             case 'Message':
                 message_text = self.message_font.render(self.message, True, self.color)
