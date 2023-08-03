@@ -109,16 +109,17 @@ class Player:
                     self.gp_end.play()
                     self.god_powerup = False
                     self.god_mode = False
-        else:
-            self.god_powerup = False
-            self.color = 'seagreen2'
-
-        if self.homing_powerup:
+        elif self.homing_powerup:
             h_current = time.time()
             self.h_total = h_current - self.h_time
 
+            self.color = 'darkgoldenrod1'
+
             if self.h_total > 10:
                 self.homing_powerup = False
+        else:
+            self.god_powerup = False
+            self.color = 'seagreen2'
 
         #main circle
         pygame.draw.circle(surface, self.color, self.position, 20)
@@ -363,7 +364,10 @@ class Projectile:
                 self.position.y -= self.velocity * dt
             
         else:
-            self.position += self.velocity * dt
+            try:
+                self.position += self.velocity * dt
+            except:
+                print('Projectile Error')
 
     def draw(self, surface):
         current_time = pygame.time.get_ticks()
