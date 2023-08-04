@@ -379,13 +379,6 @@ while running:
     screen.fill('black')
     keys = pygame.key.get_pressed()
 
-    #player moves
-    player.move(keys, dt, screen.get_width(), screen.get_height())
-    player.draw(screen)
-
-    #powerup collision/use logic
-    powerup_logic(powerUps)
-
     #projectile logic
     if keys[pygame.K_SPACE]:
         if not game_over:
@@ -398,6 +391,13 @@ while running:
     else:
         enemy_count = projectile_Return
         projectiles = [projectile for projectile in projectiles if projectile.position.y >= 0]
+
+    #player moves
+    player.move(keys, dt, screen.get_width(), screen.get_height())
+    player.draw(screen)
+
+    #powerup collision/use logic
+    powerup_logic(powerUps)
 
     #enemy logic
     player_died = enemy_logic(enemies, enemy_count, game_over, the_boss, player_died)
