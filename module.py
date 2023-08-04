@@ -117,6 +117,7 @@ class Player:
         if self.god_mode and not self.god_powerup:
             self.color = 'deeppink'
         elif self.god_powerup:
+            self.color = 'deeppink'
             #once powerup is close to ending, flash white
             if self.gp_total > 7:
                 if int(self.gp_total*10) % 2 == 0:
