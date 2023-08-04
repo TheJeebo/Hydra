@@ -92,42 +92,44 @@ class Player:
             self.last_Direction = 'sd'
        
     def draw(self, surface):
-        if self.god_mode:
-            self.color = 'deeppink'
-            if self.god_powerup:
-                #once powerup is close to ending, flash white
-                gp_current = time.time()
-                self.gp_total = gp_current - self.gp_time
+        #timing logic
+        if self.god_powerup:
+            gp_current = time.time()
+            self.gp_total = gp_current - self.gp_time
+            if self.gp_total > 10:
+                self.gp_end.play()
+                self.god_powerup = False
+                self.god_mode = False
 
-                if self.gp_total > 7:
-                    if int(self.gp_total*10) % 2 == 0:
-                        self.color = 'white'
-                    else:
-                        self.color = 'deeppink'
-                
-                pygame.draw.circle(surface, self.color, self.position, self.radius+20)
-                pygame.draw.circle(surface, 'black', self.position, self.radius+17)
-
-                if self.gp_total > 10:
-                    self.gp_end.play()
-                    self.god_powerup = False
-                    self.god_mode = False
-        elif self.homing_powerup:
+        if self.homing_powerup:
             h_current = time.time()
             self.h_total = h_current - self.h_time
-
-            self.color = 'darkgoldenrod1'
-
             if self.h_total > 10:
                 self.homing_powerup = False
-        elif self.multi_powerup:
+        
+        if self.multi_powerup:
             m_current = time.time()
             self.m_total = m_current - self.m_time
-
-            self.color = 'lawngreen'
-
             if self.m_total > 10:
                 self.multi_powerup = False
+
+        #color section
+        if self.god_mode and not self.god_powerup:
+            self.color = 'deeppink'
+        elif self.god_powerup:
+            #once powerup is close to ending, flash white
+            if self.gp_total > 7:
+                if int(self.gp_total*10) % 2 == 0:
+                    self.color = 'white'
+                else:
+                    self.color = 'deeppink'
+            #halo
+            pygame.draw.circle(surface, self.color, self.position, self.radius+20)
+            pygame.draw.circle(surface, 'black', self.position, self.radius+17)
+        elif self.homing_powerup:
+            self.color = 'darkgoldenrod1'
+        elif self.multi_powerup:
+            self.color = 'lawngreen' 
         else:
             self.god_powerup = False
             self.color = 'seagreen2'
@@ -417,13 +419,13 @@ class Enemy:
         
     def die(self):
         self.sound.play()
-        
         self.is_dead = True
 
 
 class Projectile:
     def __init__(self, position, velocity, type='Player', homing=False):
         self.position = position
+        self.start = position.copy()
         self.velocity = velocity
         self.color = 'white'
         self.size = 5
@@ -432,10 +434,13 @@ class Projectile:
         self.type = type
         self.last_color_change = 0
         self.radius = 5
+        self.trail_fade = 255
         if self.type == 'Player':
             self.color_cooldown = 100
+            self.trail_color = (self.trail_fade,self.trail_fade,0)
         else:
             self.color_cooldown = 212
+            self.trail_color = (self.trail_fade,0,0)
         self.color_bool = True
 
     def update(self, dt, enemies):
@@ -446,12 +451,14 @@ class Projectile:
             self.homing = False
 
         if self.homing:
+
             target = 10000
             for enemy in enemies:
                 distance = pygame.Vector2.distance_to(enemy.position, self.position)
                 if distance < target:
                     target = distance
                     enemy_pos = enemy.position.copy()
+                    self.start = enemy_pos
             
             if enemy_pos.x > self.position.x:
                 self.position.x += self.velocity * dt
@@ -469,6 +476,27 @@ class Projectile:
                 self.velocity = pygame.Vector2(-1000, -1000)
             else:
                 self.position += self.velocity * dt
+
+        #tail fade logic
+        if self.type == 'Player':
+            if self.homing:
+                self.trail_fade -= (0.0001 * (dt*1000))
+            else:
+                self.trail_fade -= (0.25 * (dt*1000))
+        else:
+            self.trail_fade -= (0.05 * (dt*1000))
+
+        if self.trail_fade < 0:
+            self.trail_fade = 0
+
+        if self.type == 'Player':
+            if self.homing:
+                self.trail_color = (0,self.trail_fade,0)
+            else:
+                self.trail_color = (self.trail_fade,self.trail_fade,0)
+        else:
+            self.trail_color = (self.trail_fade,0,0)
+
 
     def draw(self, surface):
         current_time = pygame.time.get_ticks()
@@ -498,6 +526,9 @@ class Projectile:
                 self.color_bool = True
             self.last_color_change = current_time
 
+        
+        
+        pygame.draw.line(surface, self.trail_color, self.start, self.position)
         pygame.draw.circle(surface, self.color, (int(self.position.x), int(self.position.y)), self.size)
 
     def collides_with(self, enemy):
