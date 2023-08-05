@@ -2,7 +2,7 @@ import pygame, random, time
 
 
 class Player:
-    def __init__(self, position, projectile_Sound, gp_end):
+    def __init__(self, position, projectile_Sound, gp_end, m_end, h_end):
         self.position = position
         self.color = 'seagreen2'
         self.projectile_Sound = projectile_Sound
@@ -25,10 +25,12 @@ class Player:
         self.homing_powerup = False 
         self.h_time = 0
         self.h_total = 0
+        self.h_end = h_end
 
         self.multi_powerup = False 
         self.m_time = 0
         self.m_total = 0
+        self.m_end = m_end
 
         if self.homing_powerup:
             self.projectile_speed = 500
@@ -105,12 +107,14 @@ class Player:
             h_current = time.time()
             self.h_total = h_current - self.h_time
             if self.h_total > 10:
+                self.h_end.play()
                 self.homing_powerup = False
         
         if self.multi_powerup:
             m_current = time.time()
             self.m_total = m_current - self.m_time
             if self.m_total > 10:
+                self.m_end.play()
                 self.multi_powerup = False
 
         #color section
