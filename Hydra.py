@@ -68,9 +68,9 @@ def powerup_logic(powerUps):
             #removes 25 from shooting cooldown, down to 100
             if powerup.type == 'Shooting':
                 powerup_sound_shooting.play()
-                message = 'Shooting Cooldown -25'
+                message = 'Shooting Cooldown -20'
                 if player.projectile_cooldown > 100:
-                    player.projectile_cooldown -= 25
+                    player.projectile_cooldown -= 20
                     if player.projectile_cooldown < 100:
                         player.projectile_cooldown = 100
             
@@ -99,14 +99,14 @@ def powerup_logic(powerUps):
             
             #homing bullet, chases closest target
             if powerup.type == 'Homing':
-                powerup_sound_shooting.play()
+                powerup_sound_homing.play()
                 message = 'Homing Bullets! 10 seconds'
                 player.homing_powerup = True
                 player.h_time = time.time()
             
             #homing bullet, chases closest target
             if powerup.type == 'Multi':
-                powerup_sound_shooting.play()
+                powerup_sound_multi.play()
                 message = 'Multi Bullets! 10 seconds'
                 player.multi_powerup = True
                 player.m_time = time.time()
@@ -161,13 +161,12 @@ def projectile_logic(projectiles, enemy_count, game_over, player_died):
                 #every 5 points there is a chance for a Powerups
                 powerup_spawn()
 
-                #every 10 points enemy count goes up by 1 until there are 30 enemies / projectile cooldown drops by 10 until its at 100
-                #TODO enemies that are in their dying animation prevent more enemies from being spawned, not the behavior I want
+                #every 10 points enemy count goes up by 1 until there are 30 enemies / projectile cooldown drops by 5 until its at 100
                 if player.score % 10 == 0:
                     if enemy_count < 30:
                         enemy_count += 1
                     if player.projectile_cooldown > 100:
-                        player.projectile_cooldown -= 10
+                        player.projectile_cooldown -= 5
 
                 if not enemy.boss_exists:
                     for i in range(enemy_count - len(enemies) + 1):
@@ -247,7 +246,12 @@ powerup_sound_frozen = pygame.mixer.Sound('Audio//powerup_frozen.wav')
 powerup_sound_speed = pygame.mixer.Sound('Audio//powerup_speed.mp3')
 powerup_sound_invincible = pygame.mixer.Sound('Audio//powerup_invincible.wav')
 powerup_sound_invincible_end = pygame.mixer.Sound('Audio//powerup_invincible_end.wav')
-powerup_sounds = [powerup_sound_shooting, powerup_sound_frozen, powerup_sound_speed, powerup_sound_invincible, powerup_sound_invincible_end]
+powerup_sound_multi = pygame.mixer.Sound('Audio//powerup_multi.wav')
+powerup_sound_multi_end = pygame.mixer.Sound('Audio//powerup_multi_end.wav')
+powerup_sound_homing = pygame.mixer.Sound('Audio//powerup_homing.wav')
+powerup_sound_homing_end = pygame.mixer.Sound('Audio//powerup_homing_end.wav')
+powerup_sounds = [powerup_sound_shooting, powerup_sound_frozen, powerup_sound_speed, powerup_sound_invincible, powerup_sound_invincible_end,
+                  powerup_sound_multi, powerup_sound_multi_end, powerup_sound_homing, powerup_sound_homing_end]
 for sound in powerup_sounds:
     sound.set_volume(0.6)
 
@@ -270,7 +274,7 @@ game_pause = False
 
 #player variables
 player_pos = pygame.Vector2(screen.get_width() / 2, screen.get_height() / 2)
-player = Player(player_pos, projectile_Sound, powerup_sound_invincible_end)
+player = Player(player_pos, projectile_Sound, powerup_sound_invincible_end, powerup_sound_multi_end, powerup_sound_homing_end)
 projectiles = []
 player_died = False
 
@@ -434,6 +438,8 @@ while running:
             if not status:
                 player.score += int(boss_health/4)
                 boss_health *= 2
+                if boss_health > 200:
+                    boss_health = 200 #max boss health
                 boss_sound.fadeout(2000)
                 background_sound.play(-1)
                 the_boss.remove(the_boss[0])
