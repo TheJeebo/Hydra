@@ -1,4 +1,4 @@
-import pygame, random, time
+import pygame, random, time, csv
 from module import Player, Enemy, Boss, Powerup
 
 
@@ -20,7 +20,7 @@ def reset_game(boss_Count):
     player.projectile_speed = 750
     player.boss_exists = False
     player.god_mode = False
-    boss_health = 100
+    
     if boss_Count > 0:
         boss_sound.stop()
         background_sound.play(-1)
@@ -229,6 +229,38 @@ def game_over_message():
     text_height = message_text.get_height()
     screen.blit(message_text, ((screen.get_width() - text_width) // 2, (screen.get_height() - text_height) // 2))
 
+def load_high_scores():
+    try:
+        with open('highscores.csv', 'r', newline='') as file:
+            reader = csv.reader(file)
+            high_scores = [(row[0], int(row[1])) for row in reader]
+            high_scores.sort(key=lambda x: x[1], reverse=True)
+            return high_scores
+    except FileNotFoundError:
+        return []
+
+def save_high_scores(high_scores):
+    with open('highscores.csv', 'w', newline='') as file:
+        writer = csv.writer(file)
+        for name, score in high_scores:
+            writer.writerow([name, score])
+
+def update_high_scores(new_score):
+    # Load existing high scores
+    high_scores = load_high_scores()
+
+    # Check if the new score is a high score
+    if len(high_scores) < 10 or new_score > high_scores[-1][1]:
+        if len(high_scores) == 10:
+            high_scores.pop()  # Remove the lowest high score
+
+        # Get the player's name (limited to 3 characters)
+        player_name = input("Congratulations! You achieved a new high score!\nEnter your name (3 characters): ")[:3]
+        high_scores.append((player_name, new_score))
+        high_scores.sort(key=lambda x: x[1], reverse=True)
+
+        # Save updated high scores
+        save_high_scores(high_scores)
 
 #audio variables
 pygame.init()
@@ -277,6 +309,8 @@ player_pos = pygame.Vector2(screen.get_width() / 2, screen.get_height() / 2)
 player = Player(player_pos, projectile_Sound, powerup_sound_invincible_end, powerup_sound_multi_end, powerup_sound_homing_end)
 projectiles = []
 player_died = False
+high_scores = load_high_scores()
+high_score_complete = False
 
 #initialize enemies
 boss_health = 25
@@ -325,6 +359,9 @@ while running:
                 enemy_count = 4
                 game_over = False
                 player_died = False
+                high_score_complete = False
+                boss_health = 25
+                high_scores = load_high_scores()
             elif event.key == pygame.K_F1:
                 if show_debug:
                     show_debug = False
@@ -363,6 +400,9 @@ while running:
                     enemy_count = 4
                     game_over = False
                     player_died = False
+                    high_score_complete = False
+                    boss_health = 25
+                    high_scores = load_high_scores()
                 elif event.key == pygame.K_F1:
                     if show_debug:
                         show_debug = False
@@ -467,6 +507,24 @@ while running:
 
     if game_over:
         game_over_message()
+
+        player_name = 'AAA'
+
+        #high score logic
+        if player.score > high_scores[-1][1] and not high_score_complete:
+            update_high_scores(player.score)
+            high_score_complete = True
+        
+        #Display High Scores
+        high_scores = load_high_scores()
+        scoreboard_font = pygame.font.Font(None, 30)
+        scoreboard_title = scoreboard_font.render('Top 10 High Scores:', True, 'white')
+        screen.blit(scoreboard_title, (10, 50))
+
+        for i, score in enumerate(high_scores, start=1):
+            score_text = scoreboard_font.render(f"{i}. {score}", True, 'white')
+            screen.blit(score_text, (10, 50 + i * 30))
+
 
     pygame.display.update()
     dt = clock.tick(1000) / 1000
