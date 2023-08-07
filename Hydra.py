@@ -518,11 +518,11 @@ while running:
         #Display High Scores
         high_scores = load_high_scores()
         scoreboard_font = pygame.font.Font(None, 30)
-        scoreboard_title = scoreboard_font.render('Top 10 High Scores:', True, 'white')
+        scoreboard_title = scoreboard_font.render('Top 10 High Scores', True, 'white')
         screen.blit(scoreboard_title, (10, 50))
 
         for i, score in enumerate(high_scores, start=1):
-            score_text = scoreboard_font.render(f"{i}. {score}", True, 'white')
+            score_text = scoreboard_font.render(f'{score[0]} : {score[1]}', True, 'white')
             screen.blit(score_text, (10, 50 + i * 30))
 
 
