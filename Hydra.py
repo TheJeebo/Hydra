@@ -1,4 +1,4 @@
-import pygame, random, time, csv
+import pygame, random, time, csv, string
 from module import Player, Enemy, Boss, Powerup
 
 
@@ -246,21 +246,77 @@ def save_high_scores(high_scores):
             writer.writerow([name, score])
 
 def update_high_scores(new_score):
-    # Load existing high scores
+    #this is a lot more code than I thought it would be...
+
+    #Load existing high scores
     high_scores = load_high_scores()
 
-    # Check if the new score is a high score
+    #Check if the new score is a high score
     if len(high_scores) < 10 or new_score > high_scores[-1][1]:
         if len(high_scores) == 10:
-            high_scores.pop()  # Remove the lowest high score
+            high_scores.pop()  #Remove the lowest high score
 
-        # Get the player's name (limited to 3 characters)
-        player_name = input("Congratulations! You achieved a new high score!\nEnter your name (3 characters): ")[:3]
+        #Get the player's name (limited to 3 characters)
+        inputting = True
+        player_name = 'AAA'
+        name_text = message_font.render(player_name, True, 'white')
+        name_width = name_text.get_width() + 50
+
+
+        alphabet = list(string.ascii_uppercase)
+        current_letter_index = 0
+        name_index = 0
+
+        while inputting:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    exit()
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_UP:
+                        current_letter_index = (current_letter_index + 1) % len(alphabet)
+                    elif event.key == pygame.K_DOWN:
+                        current_letter_index = (current_letter_index - 1) % len(alphabet)
+                    elif event.key == pygame.K_RETURN or event.key == pygame.K_KP_ENTER:
+                        current_letter_index = 0
+                        name_index += 1
+                        if name_index >= 3:
+                            inputting = False
+
+            current_letter = alphabet[current_letter_index]
+            player_name = replace_char(player_name, name_index, current_letter)
+            screen.fill('black')
+            message_text = message_font.render('GAME OVER - High Score!', True, 'white')
+            message_font2 = pygame.font.Font(None, 50)
+            message_2 = message_font2.render('Use Up, Down, and Enter', True, 'white')
+            name_font = pygame.font.Font(None, 150)
+            for i, letter in enumerate(player_name):
+                if i == name_index:
+                    render_letter = name_font.render(letter, True, 'blue')
+                else:
+                    render_letter = name_font.render(letter, True, 'white')
+                
+                text_height = render_letter.get_height()
+                screen.blit(render_letter, ((screen.get_width() + (name_width*i) - 250) // 2, (screen.get_height() - text_height) // 2))
+
+            background_sound.set_volume(0.2)
+            text_width = message_text.get_width()
+            text_height = message_text.get_height()
+            screen.blit(message_text, ((screen.get_width() - text_width) // 2, (screen.get_height() - text_height) // 4))
+            screen.blit(message_2, ((screen.get_width() - text_width) // 2, (screen.get_height() - text_height) // 3))
+            pygame.display.update()
+
         high_scores.append((player_name, new_score))
         high_scores.sort(key=lambda x: x[1], reverse=True)
 
-        # Save updated high scores
+        #Save updated high scores
         save_high_scores(high_scores)
+
+def replace_char(string, index, new_char):
+    if index < 0 or index >= len(string):
+        return string  # Return the original string if index is out of bounds
+    return string[:index] + new_char + string[index + 1:]
+
 
 #audio variables
 pygame.init()
@@ -311,6 +367,7 @@ projectiles = []
 player_died = False
 high_scores = load_high_scores()
 high_score_complete = False
+cheat_mode = False
 
 #initialize enemies
 boss_health = 25
@@ -356,6 +413,7 @@ while running:
         elif event.type == pygame.KEYDOWN:
             if game_over and event.key == pygame.K_e:
                 reset_game(len(the_boss))
+                cheat_mode = False
                 enemy_count = 4
                 game_over = False
                 player_died = False
@@ -370,6 +428,8 @@ while running:
             elif event.key == pygame.K_e:
                 game_pause = True
             elif event.key == pygame.K_F2:
+                cheat_mode = True
+
                 if player.god_mode:
                     player.god_mode = False
                 else:
@@ -397,6 +457,7 @@ while running:
             elif event.type == pygame.KEYDOWN:
                 if game_over and event.key == pygame.K_e:
                     reset_game(len(the_boss))
+                    cheat_mode = False
                     enemy_count = 4
                     game_over = False
                     player_died = False
@@ -505,15 +566,14 @@ while running:
     if show_debug:
         screen.blit(debug_text, (10, screen.get_height() - 50))
 
+    #high score logic
     if game_over:
         game_over_message()
 
-        player_name = 'AAA'
-
-        #high score logic
-        if player.score > high_scores[-1][1] and not high_score_complete:
-            update_high_scores(player.score)
-            high_score_complete = True
+        if not cheat_mode:
+            if player.score > high_scores[-1][1] and not high_score_complete:
+                update_high_scores(player.score)
+                high_score_complete = True
         
         #Display High Scores
         high_scores = load_high_scores()
