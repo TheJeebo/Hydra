@@ -409,6 +409,11 @@ class Enemy:
             self.color = (self.dead_color,self.dead_color,self.dead_color)
 
         translated_vertices = [tuple(vec + self.position) for vec in self.vertices]
+        age = (self.speed - 200)/4
+        pygame.draw.line(surface, self.color, (self.position.x-age, self.position.y-age), (self.position.x+age, self.position.y+age))
+        pygame.draw.line(surface, self.color, (self.position.x-age, self.position.y+age), (self.position.x+age, self.position.y-age))
+        pygame.draw.line(surface, self.color, (self.position.x, self.position.y+age), (self.position.x, self.position.y-age))
+        pygame.draw.line(surface, self.color, (self.position.x-age, self.position.y), (self.position.x+age, self.position.y))
         pygame.draw.polygon(surface, self.color, translated_vertices)
         return True
     
@@ -502,7 +507,6 @@ class Projectile:
         else:
             self.trail_color = (self.trail_fade,0,0)
 
-
     def draw(self, surface):
         current_time = pygame.time.get_ticks()
         dif = current_time - self.last_color_change
@@ -531,8 +535,6 @@ class Projectile:
                 self.color_bool = True
             self.last_color_change = current_time
 
-        
-        
         pygame.draw.line(surface, self.trail_color, self.start, self.position)
         pygame.draw.circle(surface, self.color, (int(self.position.x), int(self.position.y)), self.size)
 
