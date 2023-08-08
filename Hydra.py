@@ -247,12 +247,17 @@ def save_high_scores(high_scores):
 
 def update_high_scores(new_score):
     #this is a lot more code than I thought it would be...
+    #and it's gonna get longer!!!
 
     #Load existing high scores
     high_scores = load_high_scores()
 
     #Check if the new score is a high score
     if len(high_scores) < 10 or new_score > high_scores[-1][1]:
+        background_sound.stop()
+        boss_sound.stop()
+        highscore_music.play(-1)
+
         if len(high_scores) == 10:
             high_scores.pop()  #Remove the lowest high score
 
@@ -262,10 +267,11 @@ def update_high_scores(new_score):
         name_text = message_font.render(player_name, True, 'white')
         name_width = name_text.get_width() + 50
 
-
         alphabet = list(string.ascii_uppercase)
         current_letter_index = 0
         name_index = 0
+        ani = 0
+        ani_switch = True
 
         while inputting:
             for event in pygame.event.get():
@@ -286,6 +292,24 @@ def update_high_scores(new_score):
             current_letter = alphabet[current_letter_index]
             player_name = replace_char(player_name, name_index, current_letter)
             screen.fill('black')
+
+            #animate background
+            for i in range(50):
+                ani2 = ani+i*20
+                pygame.draw.line(screen, 'red', (0,0), (screen.get_width() - ani2, screen.get_height()))
+                pygame.draw.line(screen, 'green', (screen.get_width(),0), (0 + ani2, screen.get_height()))
+                pygame.draw.line(screen, 'red', (screen.get_width(), screen.get_height()), (0 + ani2 , 0))
+                pygame.draw.line(screen, 'green', (0,screen.get_height()), (screen.get_width() - ani2,0))
+
+            if ani_switch:
+                ani+=1
+                if (screen.get_width() - (ani+i*20)) < 0:
+                    ani_switch = False
+            else:
+                ani-=1
+                if ani < 0:
+                    ani_switch = True
+
             message_text = message_font.render('GAME OVER - High Score!', True, 'white')
             message_font2 = pygame.font.Font(None, 50)
             message_2 = message_font2.render('Use Up, Down, and Enter', True, 'white')
@@ -311,6 +335,9 @@ def update_high_scores(new_score):
 
         #Save updated high scores
         save_high_scores(high_scores)
+        highscore_music.stop()
+        background_sound.play(-1)
+        background_sound.set_volume(0.5)
 
 def replace_char(string, index, new_char):
     if index < 0 or index >= len(string):
@@ -377,8 +404,10 @@ powerup_sounds = [powerup_sound_shooting, powerup_sound_frozen, powerup_sound_sp
 for sound in powerup_sounds:
     sound.set_volume(0.6)
 
-background_sound = pygame.mixer.Sound('Audio//background.mp3')
+background_sound = pygame.mixer.Sound('Audio//background_60.mp3')
 boss_sound = pygame.mixer.Sound('Audio//Boss_Music.mp3')
+highscore_music = pygame.mixer.Sound('Audio/high_score.mp3')
+highscore_music.set_volume(0.6)
 background_sound.set_volume(0.2)
 background_sound.play(-1)
 
