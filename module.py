@@ -9,6 +9,8 @@ class Player:
         self.speed = 500
         self.projectile_cooldown = 500
         self.last_projectile_time = 0
+        self.fire_cooldown = 25
+        self.last_fire = 0
         self.score = 0
         self.radius = 20
         self.last_Direction = 'w'
@@ -32,6 +34,10 @@ class Player:
         self.m_total = 0
         self.m_end = m_end
 
+        self.fire_powerup = False
+        self.f_time = 0
+        self.f_total = 0
+
         if self.homing_powerup:
             self.projectile_speed = 500
         else:
@@ -41,7 +47,7 @@ class Player:
         if not self.can_move:
             return
         
-        #up/down circle back doesn't work when boss is active
+        #up/down wrap around doesn't work when boss is active
         if keys[pygame.K_w] or keys[pygame.K_UP]:
             self.last_Direction = 'w'
             self.position.y -= self.speed * dt
@@ -93,7 +99,7 @@ class Player:
         if keys[pygame.K_DOWN] and keys[pygame.K_RIGHT]:
             self.last_Direction = 'sd'
        
-    def draw(self, surface):
+    def draw(self, surface, projectiles):
         #timing logic
         if self.god_powerup:
             gp_current = time.time()
@@ -116,6 +122,15 @@ class Player:
             if self.m_total > 10:
                 self.m_end.play()
                 self.multi_powerup = False
+        
+        if self.fire_powerup:
+            f_current = time.time()
+            self.f_total = f_current - self.f_time
+            if self.can_shoot(from_powerup=True):
+                self.last_fire = pygame.time.get_ticks()
+                self.shoot(projectiles, fire=True)
+            if self.f_total > 10:
+                self.fire_powerup = False
 
         #color section
         if self.god_mode and not self.god_powerup:
@@ -135,6 +150,8 @@ class Player:
             self.color = 'darkgoldenrod1'
         elif self.multi_powerup:
             self.color = 'lawngreen' 
+        elif self.fire_powerup:
+            self.color = 'red' 
         else:
             self.god_powerup = False
             self.color = 'seagreen2'
@@ -161,11 +178,14 @@ class Player:
             case 'sd':
                 pygame.draw.circle(surface, 'black', (self.position.x + 9, self.position.y + 9), 7)
     
-    def can_shoot(self):
+    def can_shoot(self, from_powerup=False):
         current_time = pygame.time.get_ticks()
-        return current_time - self.last_projectile_time > self.projectile_cooldown
+        if self.fire_powerup and from_powerup:
+            return current_time - self.last_fire > self.fire_cooldown
+        else:
+            return current_time - self.last_projectile_time > self.projectile_cooldown
 
-    def shoot(self, projectiles, multi=False, left_right=''):
+    def shoot(self, projectiles, multi=False, left_right='', fire=False):
         if multi:
             #either go left or right of the current direction
             self.last_projectile_time = pygame.time.get_ticks()
@@ -242,7 +262,15 @@ class Player:
 
             projectiles.append(new_projectile)
             return
-
+        
+        if self.fire_powerup and fire:
+            #leave a trail of projectiles
+            #this is triggered by self.draw() and should not affect can_shoot, which is when the player shoots
+            fire_time = time.time()
+            projectile_Direction = pygame.Vector2(0,0)
+            new_projectile = Projectile(self.position.copy(), projectile_Direction, fire=True, fire_time=fire_time)
+            projectiles.append(new_projectile)
+            return
 
         if self.can_shoot():
             self.projectile_Sound.play()
@@ -283,7 +311,7 @@ class Player:
                 new_projectile = Projectile(self.position.copy(), projectile_Direction)
 
             projectiles.append(new_projectile)
-
+        
 
 class Enemy:
     def __init__(self, count, screen, sound):
@@ -433,7 +461,7 @@ class Enemy:
 
 
 class Projectile:
-    def __init__(self, position, velocity, type='Player', homing=False):
+    def __init__(self, position, velocity, type='Player', homing=False, fire=False,fire_time=0):
         self.position = position
         self.start = position.copy()
         self.velocity = velocity
@@ -441,6 +469,9 @@ class Projectile:
         self.size = 5
         self.can_move = True
         self.homing = homing
+        self.fire = fire
+        self.f_time = fire_time
+        self.f_total = 0
         self.type = type
         self.last_color_change = 0
         self.radius = 5
@@ -460,8 +491,14 @@ class Projectile:
         if len(enemies) <= 0:
             self.homing = False
 
-        if self.homing:
+        if self.fire:
+            f_current = time.time()
+            self.f_total = f_current - self.f_time
+            if self.f_total > 1:
 
+                return False
+
+        if self.homing:
             target = 10000
             for enemy in enemies:
                 distance = pygame.Vector2.distance_to(enemy.position, self.position)
@@ -478,7 +515,6 @@ class Projectile:
                 self.position.y += self.velocity * dt
             if enemy_pos.y < self.position.y:
                 self.position.y -= self.velocity * dt
-            
         else:
             if not isinstance(self.velocity, pygame.Vector2):
                 #it's a dirty fix, but in the case that a homing projectile turns off when a boss spawn we need to change
@@ -512,7 +548,7 @@ class Projectile:
         dif = current_time - self.last_color_change
 
         if dif > self.color_cooldown:
-            if self.color_bool and self.type == 'Player'and not self.homing:
+            if self.color_bool and self.type == 'Player'and not self.homing and not self.fire:
                 self.color = 'deepskyblue'
                 self.size = 10
                 self.color_bool = False
@@ -527,6 +563,11 @@ class Projectile:
             elif not self.color_bool and self.type == 'Player' and self.homing:
                 self.color = 'orangered4'
                 self.size = 5
+                self.color_bool = False
+                self.color_bool = True
+            elif self.color_bool and self.fire:
+                self.color = 'red'
+                self.size = 10
                 self.color_bool = False
                 self.color_bool = True
             else:
@@ -640,6 +681,12 @@ class Powerup:
                     self.color = 'indianred1'
                 else:
                     self.color = 'orangered4'
+            
+            case 'Fire':
+                if round(self.time_Active*10,0) % 2 == 0:
+                    self.color = 'red'
+                else:
+                    self.color = 'white'
 
             case 'Multi':
                 if round(self.time_Active,0) % 2 == 0:
