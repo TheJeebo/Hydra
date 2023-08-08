@@ -317,6 +317,40 @@ def replace_char(string, index, new_char):
         return string  # Return the original string if index is out of bounds
     return string[:index] + new_char + string[index + 1:]
 
+def reset_high_scores():
+    message_font = pygame.font.Font(None, 25)
+    message_text = message_font.render('Press F3 again to reset all high scores. Any other key to cancel.', True, 'white')
+    text_width = message_text.get_width()
+    text_height = message_text.get_height()
+    screen.blit(message_text, ((screen.get_width() - text_width) // 4, (screen.get_height() - text_height) // 3))
+    pygame.display.update()
+
+    prompt = True
+    while prompt:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_F3:
+                    prompt = False
+                else:
+                    return
+
+    default_scores = 'highscores_default.csv'
+    current_scores = 'highscores.csv'
+
+    data = []
+    with open(default_scores, 'r', newline='') as csvfile:
+        reader = csv.reader(csvfile)
+        for row in reader:
+            data.append(row)
+
+    with open(current_scores, 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        for row in data:
+            writer.writerow(row)
+
 
 #audio variables
 pygame.init()
@@ -375,7 +409,6 @@ enemy_count = 4
 enemies = []
 powerUps = []
 
-
 #pre-game menu
 while not game_start and running:
     for event in pygame.event.get():
@@ -384,11 +417,12 @@ while not game_start and running:
             pygame.quit()
             exit()
         elif event.type == pygame.KEYDOWN:
-                if not game_start and event.key == pygame.K_e:
-                    game_start = True  #Player pressed 'E', start the game
-                    background_sound.set_volume(0.5)
+            if not game_start and event.key == pygame.K_e:
+                game_start = True  #Player pressed 'E', start the game
+                background_sound.set_volume(0.5)
+            elif event.key == pygame.K_F3:
+                reset_high_scores()
         
-    
     if not game_start and running:
         #Display the starting message and wait for the player to press 'E'
         screen.fill('black')
@@ -400,7 +434,6 @@ while not game_start and running:
 for i in range(enemy_count):
     enemies.append(Enemy(len(enemies), screen, enemy_die_Sound))
 the_boss = []
-
 
 #main loop
 clock = pygame.time.Clock()
@@ -434,6 +467,8 @@ while running:
                     player.god_mode = False
                 else:
                     player.god_mode = True
+            elif game_over and event.key == pygame.K_F3:
+                reset_high_scores()
 
     #pause      
     paused_time = 0
@@ -474,6 +509,8 @@ while running:
                     background_sound.set_volume(0.5)
                     boss_sound.set_volume(0.7)
                     clock = pygame.time.Clock()
+                elif event.key == pygame.K_F3:
+                    reset_high_scores()
 
     #powerup pause correction
     if len(powerUps) > 0:
@@ -584,7 +621,6 @@ while running:
         for i, score in enumerate(high_scores, start=1):
             score_text = scoreboard_font.render(f'{score[0]} : {score[1]}', True, 'white')
             screen.blit(score_text, (10, 50 + i * 30))
-
 
     pygame.display.update()
     dt = clock.tick(1000) / 1000
