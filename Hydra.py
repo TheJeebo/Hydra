@@ -111,6 +111,11 @@ def powerup_logic(powerUps):
                 player.multi_powerup = True
                 player.m_time = time.time()
             
+            if powerup.type == 'Message':
+                #there is a rare error where a 'message' type powerup gets through collision
+                #it will just repeat whatever message it is holding
+                message = powerup.message
+
             #Display powerup message
             try:
                 powerUps.append(Powerup(screen, 'Message', message))
