@@ -29,11 +29,17 @@ def reset_game(boss_Count):
         enemies.append(Enemy(len(enemies), screen, enemy_die_Sound))
 
 def powerup_spawn():
-    types = ['Shooting','Speed','Frozen','Invincible','Homing','Multi']
+    types = ['Shooting','Speed','Frozen','Invincible','Homing','Multi', 'Fire']
 
     if player.score % 5 == 0:
         for type in types:
             powerup_roll = random.randint(1,100)
+            if powerup_roll < 200:
+                #test
+                match type:
+                    case 'Fire':
+                        powerUps.append(Powerup(screen, type))
+                
             if powerup_roll < 5:
                 #rare
                 match type:
@@ -41,6 +47,9 @@ def powerup_spawn():
                         powerUps.append(Powerup(screen, type))
                     case 'Homing':
                         powerUps.append(Powerup(screen, type))
+                    case 'Fire':
+                        powerUps.append(Powerup(screen, type))
+
             if powerup_roll < 20:
                 #common
                 match type:
@@ -62,7 +71,7 @@ def powerup_logic(powerUps):
         if not active:
             powerUps.remove(powerup)
 
-        if powerup.collides_with(player):
+        if powerup.collides_with(player) and not powerup.type == 'Message':
             powerUps.remove(powerup)
 
             #removes 25 from shooting cooldown, down to 100
@@ -111,6 +120,14 @@ def powerup_logic(powerUps):
                 player.multi_powerup = True
                 player.m_time = time.time()
             
+            #leaves a fire trail
+            if powerup.type == 'Fire':
+                powerup_sound_multi.play()
+                message = 'Fire Trail! 10 seconds'
+                player.fire_powerup = True
+                player.f_time = time.time()
+            
+            #message catch
             if powerup.type == 'Message':
                 #there is a rare error where a 'message' type powerup gets through collision
                 #it will just repeat whatever message it is holding
@@ -126,12 +143,17 @@ def projectile_logic(projectiles, enemy_count, game_over, player_died):
     #returns enemy_count unless Boss projectile hits player, then returns True
     for projectile in projectiles:
         if is_out_of_bounds(projectile, screen.get_width(), screen.get_height()):
-                projectiles.remove(projectile)
+            projectiles.remove(projectile)
 
         if game_over:
             projectile.can_move = False
 
-        projectile.update(dt, enemies)
+        status = projectile.update(dt, enemies)
+
+        if isinstance(status, bool):
+            if not status:
+                projectiles.remove(projectile)
+
         projectile.draw(screen)
 
         if len(the_boss) > 0:
@@ -570,7 +592,7 @@ while running:
 
     #player moves
     player.move(keys, dt, screen.get_width(), screen.get_height())
-    player.draw(screen)
+    player.draw(screen, projectiles)
 
     #powerup collision/use logic
     powerup_logic(powerUps)
