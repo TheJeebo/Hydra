@@ -35,12 +35,6 @@ def powerup_spawn():
     if player.score % 5 == 0:
         for type in types:
             powerup_roll = random.randint(1,100)
-            if powerup_roll < 200:
-                #test
-                match type:
-                    case 'Fire':
-                        powerUps.append(Powerup(screen, type))
-                
             if powerup_roll < 5:
                 #rare
                 match type:
@@ -619,6 +613,7 @@ while running:
 
     if len(the_boss) > 0:
         player.homing_powerup = False
+        player.fire_powerup = False
 
         if player_died:
             the_boss[0].can_move = False
