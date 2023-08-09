@@ -449,6 +449,9 @@ game_start = False
 start_message_text = message_font.render('Press E to Start', True, 'white')
 show_debug = False
 game_pause = False
+pygame.display.set_caption('Hydra')
+Icon = pygame.image.load('lambda.png')
+pygame.display.set_icon(Icon)
 
 #player variables
 player_pos = pygame.Vector2(screen.get_width() / 2, screen.get_height() / 2)
