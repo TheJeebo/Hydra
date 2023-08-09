@@ -2,7 +2,7 @@ import pygame, random, time
 
 
 class Player:
-    def __init__(self, position, projectile_Sound, gp_end, m_end, h_end):
+    def __init__(self, position, projectile_Sound, gp_end, m_end, h_end, f_end):
         self.position = position
         self.color = 'seagreen2'
         self.projectile_Sound = projectile_Sound
@@ -37,6 +37,7 @@ class Player:
         self.fire_powerup = False
         self.f_time = 0
         self.f_total = 0
+        self.f_end = f_end
 
         if self.homing_powerup:
             self.projectile_speed = 500
@@ -116,13 +117,6 @@ class Player:
                 self.h_end.play()
                 self.homing_powerup = False
         
-        if self.multi_powerup:
-            m_current = time.time()
-            self.m_total = m_current - self.m_time
-            if self.m_total > 10:
-                self.m_end.play()
-                self.multi_powerup = False
-        
         if self.fire_powerup:
             f_current = time.time()
             self.f_total = f_current - self.f_time
@@ -130,8 +124,16 @@ class Player:
                 self.last_fire = pygame.time.get_ticks()
                 self.shoot(projectiles, fire=True)
             if self.f_total > 10:
+                self.f_end.play()
                 self.fire_powerup = False
 
+        if self.multi_powerup:
+            m_current = time.time()
+            self.m_total = m_current - self.m_time
+            if self.m_total > 10:
+                self.m_end.play()
+                self.multi_powerup = False
+        
         #color section
         if self.god_mode and not self.god_powerup:
             self.color = 'deeppink'
@@ -148,10 +150,10 @@ class Player:
             pygame.draw.circle(surface, 'black', self.position, self.radius+17)
         elif self.homing_powerup:
             self.color = 'darkgoldenrod1'
-        elif self.multi_powerup:
-            self.color = 'lawngreen' 
         elif self.fire_powerup:
             self.color = 'red' 
+        elif self.multi_powerup:
+            self.color = 'lawngreen' 
         else:
             self.god_powerup = False
             self.color = 'seagreen2'
