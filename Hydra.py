@@ -17,6 +17,7 @@ def reset_game(boss_Count):
     player.speed = 500
     player.homing_powerup = False
     player.multi_powerup = False
+    player.fire_powerup = False
     player.projectile_speed = 750
     player.boss_exists = False
     player.god_mode = False
@@ -122,7 +123,7 @@ def powerup_logic(powerUps):
             
             #leaves a fire trail
             if powerup.type == 'Fire':
-                powerup_sound_multi.play()
+                powerup_sound_fire.play()
                 message = 'Fire Trail! 10 seconds'
                 player.fire_powerup = True
                 player.f_time = time.time()
@@ -137,7 +138,7 @@ def powerup_logic(powerUps):
             try:
                 powerUps.append(Powerup(screen, 'Message', message))
             except:
-                print('PowerUp Message Error')
+                continue
 
 def projectile_logic(projectiles, enemy_count, game_over, player_died):
     #returns enemy_count unless Boss projectile hits player, then returns True
@@ -160,7 +161,10 @@ def projectile_logic(projectiles, enemy_count, game_over, player_died):
             #player hitting boss logic
             if projectile.type == 'Player' and projectile.collides_with(the_boss[0]):
                 enemy_die_Sound.play()
-                projectiles.remove(projectile)
+                try:
+                    projectiles.remove(projectile)
+                except:
+                    continue
                 the_boss[0].health -= 1
 
         if projectile.type == 'Boss' and projectile.collides_with(player):
@@ -180,7 +184,7 @@ def projectile_logic(projectiles, enemy_count, game_over, player_died):
                 try:
                     projectiles.remove(projectile)
                 except:
-                    print('Projectile Error')
+                    continue
 
                 if projectile.type == 'Player':
                     player.score += 1
@@ -363,8 +367,8 @@ def update_high_scores(new_score):
         #Save updated high scores
         save_high_scores(high_scores)
         highscore_music.stop()
-        background_sound.play(-1)
-        background_sound.set_volume(0.5)
+        background_sound.play(0)
+        background_sound.set_volume(0.2)
 
 def replace_char(string, index, new_char):
     if index < 0 or index >= len(string):
@@ -426,8 +430,10 @@ powerup_sound_multi = pygame.mixer.Sound('Audio//powerup_multi.wav')
 powerup_sound_multi_end = pygame.mixer.Sound('Audio//powerup_multi_end.wav')
 powerup_sound_homing = pygame.mixer.Sound('Audio//powerup_homing.wav')
 powerup_sound_homing_end = pygame.mixer.Sound('Audio//powerup_homing_end.wav')
+powerup_sound_fire = pygame.mixer.Sound('Audio//powerup_fire.wav')
+powerup_sound_fire_end = pygame.mixer.Sound('Audio//powerup_fire_end.wav')
 powerup_sounds = [powerup_sound_shooting, powerup_sound_frozen, powerup_sound_speed, powerup_sound_invincible, powerup_sound_invincible_end,
-                  powerup_sound_multi, powerup_sound_multi_end, powerup_sound_homing, powerup_sound_homing_end]
+                  powerup_sound_multi, powerup_sound_multi_end, powerup_sound_homing, powerup_sound_homing_end, powerup_sound_fire, powerup_sound_fire_end]
 for sound in powerup_sounds:
     sound.set_volume(0.6)
 
@@ -452,7 +458,7 @@ game_pause = False
 
 #player variables
 player_pos = pygame.Vector2(screen.get_width() / 2, screen.get_height() / 2)
-player = Player(player_pos, projectile_Sound, powerup_sound_invincible_end, powerup_sound_multi_end, powerup_sound_homing_end)
+player = Player(player_pos, projectile_Sound, powerup_sound_invincible_end, powerup_sound_multi_end, powerup_sound_homing_end, powerup_sound_fire_end)
 projectiles = []
 player_died = False
 high_scores = load_high_scores()
@@ -608,6 +614,7 @@ while running:
         boss_sound.play(-1)
         player.boss_exists = True
         player.homing_powerup = False
+        player.fire_powerup = False
         the_boss.append(Boss(boss_health, screen, projectile_Sound))
 
     if len(the_boss) > 0:
